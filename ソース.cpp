@@ -372,14 +372,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ScreenFlip();
 
 		FPS_WAIT();
-
-		for (int mapCnt = 0; mapCnt < GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT; mapCnt++)
-		{
-			DeleteGraph(MapImage.Handle[mapCnt]);	//マップのハンドルを削除
-		}
-
-		DxLib_End();		//ＤＸライブラリ使用の終了処理
 	}
+
+	for (int mapCnt = 0; mapCnt < GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT; mapCnt++)
+	{
+		DeleteGraph(MapImage.Handle[mapCnt]);	//マップのハンドルを削除
+	}
+
+	for (int charaCnt = 0; charaCnt < GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT; charaCnt++)
+	{
+		DeleteGraph(MapImage.Handle[charaCnt]);	//キャラのハンドルを削除
+	}
+
+	DxLib_End();		//ＤＸライブラリ使用の終了処理
 }
 
 VOID ALL_KEYDOWN_UPDATE(VOID)
