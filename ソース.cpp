@@ -22,8 +22,8 @@
 #define GAME_MAP_PNG			 "map\\mapdata2.png"
 #define GAME_MAP_CSV_SAIKASO	 "map\\mapdata_saikaso.csv"
 
-#define GAME_MAP_BUN_YOKO_CNT 90	//マップの分割数（横）
-#define GAME_MAP_BUN_TATE_CNT 45    //マップの分割数（縦）
+#define GAME_MAP_BUN_YOKO_CNT 86	//マップの分割数（横）
+#define GAME_MAP_BUN_TATE_CNT 46    //マップの分割数（縦）
 
 #define GAME_MAP_YOKO	100			//マップの数（横）	
 #define GAME_MAP_TATE	80			//マップの数（縦）
@@ -209,6 +209,8 @@ BOOL MY_MAP_READ_CSV_NUM(FILE*, const char*);
 
 BOOL MY_MAP_LOAD_BUNKATSU(MAP*, int, int, int, int, int, const char*);	//MAPを分割して読み込む設定をする関数
 
+BOOL MY_CHARA_LOAD_BUNKATSU(CHARA*, int, int, int, int, int, const char*);
+
 BOOL MY_INIT_PLAYER(PLAYER*, CHARA, int*, int, int, int);					//プレイヤーを初期化する関数
 
 VOID MY_PLAY_PLAYER_DRAW(VOID);		//プレイヤーを表示する関数
@@ -220,9 +222,6 @@ BOOL IsActiveCheck = FALSE;	//画面のアクティブチェック有効化
 int StopActiveStartTime = 0;	//非アクティブ化の開始時間
 int StopActiveStopTime = 0;		//非アクティブ化の終了時間
 int StopActiveTotalTime = 0;	//非アクティブ化の経過時間
-
-//プロトタイプ宣言
-LRESULT CALLBACK MY_WNDPROC(HWND, UINT, WPARAM, LPARAM);//自作ウィンドウプロシージャ
 
 VOID FPS_UPDATE(VOID);
 VOID FPS_DRAW(VOID);
@@ -270,9 +269,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetWindowStyleMode(SET_WINDOW_ST_MODE_DEFAULT);
 	SetMainWindowText(TEXT(GAME_WINDOW_NAME));
 
-	//フック→WM_CLOSEなどのメッセージを引っ掛けて取得
-	SetHookWinProc(MY_WNDPROC);	//ウィンドウプロシージャの設定
-
 	if (DxLib_Init() == -1) { return -1; }
 
 	SetDrawScreen(DX_SCREEN_BACK);
@@ -282,7 +278,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (GAZOU_LOAD(&over, 0, 0, GAME_OVER) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&clear, 0, 0, GAME_CLEAR) == FALSE) { return -1; }
 
-	if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, 32, 32, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
+	if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, 8, 8, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
 
 	if (MY_CHARA_LOAD_BUNKATSU(&CharaImage, GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_BUN_YOKO_CNT, GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_YOKO_SIZE, GAME_CHARA_TATE_SIZE, GAME_PLAYER) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotFound", MB_OK); return -1; }	//CHARAを読み込む
 
@@ -443,94 +439,6 @@ VOID FPS_WAIT(VOID)
 	return;
 }
 
-//ウィンドウプロシージャ関数
-LRESULT CALLBACK MY_WNDPROC(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-	int closeMsgRet = 0;//閉じるメッセージボックスの戻り値
-
-	switch (msg)
-	{
-
-	case WM_CREATE:	//ウィンドウの生成＆初期化
-
-
-		IsWM_CREATE = TRUE;	//WM_CREATE正常終了
-		return 0;
-
-	case WM_CLOSE:		//閉じるボタンを押したとき
-
-		DestroyWindow(hwnd);//画面を破棄
-		//MessageBox(hwnd, TEXT("ゲームを終了します"), TEXT("終了メッセージ"), MB_OK);
-		break;
-
-	case WM_RBUTTONDOWN:	//マウスの右ボタンを押したとき
-
-		closeMsgRet = MessageBox(hwnd, TEXT("ゲームを終了しますか？"), TEXT("終了メッセージ"), MB_YESNO);
-
-		if (closeMsgRet == IDYES)
-		{
-			SendMessage(hwnd, WM_CLOSE, 0, 0);//WM_CLOSEメッセージをキューに追加
-		}
-		else if (closeMsgRet == IDNO)
-		{
-			break;//終了させない
-		}
-
-		//SendMessage(hwnd, WM_CLOSE, 0, 0);		//WM_CLOSEメッセージをキューに追加
-		break;
-
-	case WM_ACTIVATE:
-
-		if (IsActiveCheck == TRUE)//画面のアクティブチェック有効化
-		{
-			switch (wp)
-			{
-			case WA_INACTIVE://非アクティブ化
-
-				//MessageBox(hwnd,TEXT("非アクティブ化"),TEXT("Active"),MB_OK);
-				StopActiveStartTime = GetNowCount();
-
-				break;
-
-			case WA_ACTIVE://キーボードなどでアクティブ化
-
-				//MessageBox(hwnd, TEXT("キーボードなどでアクティブ化"), TEXT("Active"), MB_OK);
-				StopActiveStopTime = GetNowCount();
-
-				break;
-
-			case WA_CLICKACTIVE://マウスクリックでアクティブ化
-
-								//MessageBox(hwnd, TEXT("マウスクリックでアクティブ化"), TEXT("Active"), MB_OK);
-				StopActiveStopTime = GetNowCount();
-
-				break;
-
-			default:
-
-				break;
-
-			}
-		}
-
-		return 0;
-
-	case WM_LBUTTONDOWN:	//マウスの左ボタンを押したとき
-
-		//WM_NCLBUTTONDOWN(タイトルバーでマウスの左ボタンを押した)メッセージをすぐに発行
-		PostMessage(hwnd, WM_NCLBUTTONDOWN, (WPARAM)HTCAPTION, lp);
-		break;
-
-	case WM_DESTROY:	//ウィンドウが破棄された(なくなった)とき
-
-		PostQuitMessage(0);		//メッセージキューに WM_QUIT を送る
-		return 0;
-	}
-
-	//デフォルトのウィンドウプロシージャ関数を呼び出す
-	return DefWindowProc(hwnd, msg, wp, lp);
-}
-
 BOOL FONT_CREATE(const char* name, int* f, int pt, int bold, int type)
 {
 	*f = CreateFontToHandle(name, pt, bold, type);
@@ -650,7 +558,7 @@ BOOL MY_CHARA_LOAD_BUNKATSU(CHARA* c, int bun_num, int bun_x_num, int bun_y_num,
 
 	if (ret == -1) { return FALSE; }//画像読み込みエラー
 
-	for (int cnt = 0; cnt < GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT; cnt++)
+	for (int cnt = 0; cnt < GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT; cnt++)
 	{
 		//画像サイズを取得
 		GetGraphSize(
