@@ -44,11 +44,6 @@
 
 #define GAME_CHARA_SPEED 3			//キャラのスピード
 
-#define GAME_ENEMY_FIRST_MUKI_U		0		//最初の画像の向き(上)
-#define GAME_ENEMY_FIRST_MUKI_R		3		//最初の画像の向き(右)
-#define GAME_ENEMY_FIRST_MUKI_D		6		//最初の画像の向き(下)
-#define GAME_ENEMY_FIRST_MUKI_L		9		//最初の画像の向き(左)
-
 #define FNT_TANU_NAME TEXT("たぬき油性マジック")
 
 #define GAME_MAP_NOTDOWN_KIND	1		//下に行けないマップの種類
