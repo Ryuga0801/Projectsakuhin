@@ -174,6 +174,7 @@ GAZOU title;
 GAZOU sousa;
 GAZOU over;
 GAZOU clear;
+GAZOU map;
 
 MAP MapImage;	//マップの画像
 
@@ -222,7 +223,11 @@ VOID FPS_UPDATE(VOID);
 VOID FPS_DRAW(VOID);
 VOID FPS_WAIT(VOID);
 
+VOID MY_PLAY_PLAYER_DRAW(VOID);		//プレイヤーを表示する関数
+
 VOID MY_PLAY_MAP_DRAW(VOID);	//マップを表示する関数
+
+VOID MY_GAME_PLAY(VOID);		//プレイ画面の関数
 
 int MapData[GAME_MAP_TATE][GAME_MAP_YOKO];	//マップのデータ
 int MapData_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
@@ -272,8 +277,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (GAZOU_LOAD(&sousa, 0, 0, GAME_SOUSA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&over, 0, 0, GAME_OVER) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&clear, 0, 0, GAME_CLEAR) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&map, 0, 0, GAME_MAP_PNG) == FALSE) { return -1; }
 
-	if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, 8, 8, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
+	//if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, 8, 8, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
 
 	if (MY_CHARA_LOAD_BUNKATSU(&CharaImage, GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_BUN_YOKO_CNT, GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_YOKO_SIZE, GAME_CHARA_TATE_SIZE, GAME_PLAYER) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotFound", MB_OK); return -1; }	//CHARAを読み込む
 
@@ -329,7 +335,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
 
-			MY_PLAY_MAP_DRAW();			//マップを描画
+			MY_GAME_PLAY();		//プレイ画面の処理
 
 			break;
 
@@ -471,9 +477,9 @@ VOID MY_PLAY_MAP_DRAW(VOID)
 				(yoko + 0) * GAME_MAP_YOKO_SIZE - ScrollCntYoko <= GAME_WIDTH)	//画面に写っているならばならば
 			{
 				DrawGraph(
-					yoko * GAME_MAP_YOKO_SIZE - ScrollCntYoko,			//位置からスクロール量を引く
+					yoko * GAME_MAP_YOKO_SIZE,			//位置からスクロール量を引く
 					tate * GAME_MAP_TATE_SIZE,
-					MapImage.Handle[MapData[tate][yoko]], TRUE);		//マップをスクロールしながら描画
+					MapImage.Handle[tate * GAME_CHARA_BUN_YOKO_CNT + yoko], TRUE);	//マップをスクロールしながら描画
 
 				//DrawBox(
 				//	rectMap_DownNG[tate][yoko].left,
@@ -500,6 +506,44 @@ VOID MY_PLAY_MAP_DRAW(VOID)
 			}
 		}
 	}
+}
+
+//プレイヤーを表示する関数
+VOID MY_PLAY_PLAYER_DRAW(VOID)
+{
+	DrawExtendGraph(
+		Myplayer.X,
+		Myplayer.Y,
+		Myplayer.X + Myplayer.Width,
+		Myplayer.Y + Myplayer.Height + 4,
+		Myplayer.Handle[Myplayer.NowHandleNum], TRUE
+	);
+
+	DrawBox(
+		Myplayer.atariRect.left,
+		Myplayer.atariRect.top,
+		Myplayer.atariRect.right,
+		Myplayer.atariRect.bottom,
+		GetColor(0, 0, 255), FALSE);
+
+	/*DrawFormatString(0, 40, GetColor(255, 255, 255), "プレイヤーの動いた距離 : %04d", Myplayer.MoveDist);	//動いた距離を表示
+	DrawFormatString(0, 60, GetColor(255, 255, 255), "プレイヤーX：%04d", Myplayer.X);	//プレイヤーのX位置を表示
+	DrawFormatString(0, 80, GetColor(255, 255, 255), "プレイヤーY：%04d", Myplayer.Y);	//プレイヤーのY位置を表示
+	DrawFormatString(0, 100, GetColor(255, 255, 255), "ジャンプ頂点：%04d", Myplayer.JumpMaxTop);	//プレイヤーのジャンプの頂点
+
+	//ジャンプ中
+	if (Myplayer.IsJumpNow == TRUE)
+	{
+		DrawString(0, 120, "ジャンプフラグON", GetColor(255, 255, 255));	//ジャンプ中
+	}
+
+	//頂点に達したとき
+	if (Myplayer.IsJumpTop == TRUE)
+	{
+		DrawString(0, 140, "頂点フラグON", GetColor(255, 255, 255));//ジャンプ中
+	}*/
+
+	return;
 }
 
 BOOL MY_MAP_LOAD_BUNKATSU(MAP* m, int bun_num, int bun_x_num, int bun_y_num, int bun_width, int bun_height, const char* path)
@@ -721,4 +765,11 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 	}
 
 	return TRUE;
+}
+
+//プレイ画面の関数
+VOID MY_GAME_PLAY(VOID)
+{
+	MY_PLAY_MAP_DRAW();			//マップを描画
+	MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
 }
