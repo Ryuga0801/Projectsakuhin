@@ -209,8 +209,6 @@ BOOL MY_CHARA_LOAD_BUNKATSU(CHARA*, int, int, int, int, int, const char*);
 
 BOOL MY_INIT_PLAYER(PLAYER*, CHARA, int*, int, int, int);					//プレイヤーを初期化する関数
 
-VOID MY_PLAY_PLAYER_DRAW(VOID);		//プレイヤーを表示する関数
-
 VOID ALL_KEYDOWN_UPDATE(VOID);
 
 BOOL IsActiveCheck = FALSE;	//画面のアクティブチェック有効化
@@ -334,8 +332,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
-
-			MY_GAME_PLAY();		//プレイ画面の処理
+			MY_PLAY_PLAYER_DRAW();
+			//MY_GAME_PLAY();		//プレイ画面の処理
 
 			break;
 
