@@ -1077,6 +1077,16 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 			//押されてないときは左向きの立ちポーズ
 			Myplayer.NowHandleNum = 10;
 		}
+		else if (Myplayer.NowHandleNum >= 0 && Myplayer.NowHandleNum <= 2)
+		{
+			//押されてないときは上向きの立ちポーズ
+			Myplayer.NowHandleNum = 1;
+		}
+		else if (Myplayer.NowHandleNum >= 6 && Myplayer.NowHandleNum <= 8)
+		{
+			//押されてないときは下向きの立ちポーズ
+			Myplayer.NowHandleNum = 7;
+		}
 		Myplayer.NowHandleCnt = Myplayer.NowHandleCntMAX - 1;	//すぐ画像を変えられるようにする
 	}
 
