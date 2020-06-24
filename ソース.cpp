@@ -17,7 +17,7 @@
 #define GAME_OVER  "gazou\\gameover.png"
 #define GAME_SOUSA "gazou\\sousasetumei.png"
 
-#define GAME_PLAYER "chara\\chara1.png"
+#define GAME_PLAYER "chara\\chara.png"
 
 #define GAME_MAP_PNG			 "map\\mapdata2.png"
 #define GAME_MAP_CSV_SAIKASO	 "map\\mapdata_saikaso.csv"
@@ -34,7 +34,7 @@
 #define GAME_CHARA_BUN_YOKO_CNT 12	//キャラの分割数（横）
 #define GAME_CHARA_BUN_TATE_CNT 8	//キャラの分割数（縦）
 
-#define GAME_CHARA_YOKO_SIZE 25		//キャラの大きさ（横）	//ツチノコの場合：48	サーナイトの場合：24
+#define GAME_CHARA_YOKO_SIZE 24		//キャラの大きさ（横）	//ツチノコの場合：48	サーナイトの場合：24
 #define GAME_CHARA_TATE_SIZE 32		//キャラの大きさ（縦）	//ツチノコの場合：48	サーナイトの場合：32
 
 #define GAME_CHARA_MOTION_NUM 12	//キャラの画像数
@@ -84,6 +84,8 @@ char AllKeyState[256];
 int GameSceneNow = (int)GAME_SCENE_TITLE;
 
 int ScrollCntYoko = 0;			//スクロールカウンタ（横）
+
+int ScrollDistPlusYoko = 1;	//スクロールする距離（横）
 
 struct STRUCT_GAZOU
 {
@@ -280,6 +282,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, 8, 8, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
 
 	if (MY_CHARA_LOAD_BUNKATSU(&CharaImage, GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_BUN_YOKO_CNT, GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_YOKO_SIZE, GAME_CHARA_TATE_SIZE, GAME_PLAYER) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotFound", MB_OK); return -1; }	//CHARAを読み込む
+	
+	if (MY_INIT_PLAYER(&Myplayer,CharaImage,&PlayerImageNum[0],100,100,4) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotInitPlayer", MB_OK); return -1; }
 
 	if (MY_MAP_READ_CSV_NUM(fp_map_csv, GAME_MAP_CSV_SAIKASO) == FALSE) { MessageBox(NULL, GAME_MAP_CSV_SAIKASO, "NotFound", MB_OK); return -1; }	//CSVを読み込む
 
@@ -332,9 +336,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
-			MY_PLAY_PLAYER_DRAW();
-			//MY_GAME_PLAY();		//プレイ画面の処理
-
+			MY_PLAY_MAP_DRAW();			//マップを描画
+			DrawGraph(map.X, map.Y, map.Handle, TRUE);
+			MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
 			break;
 
 		case(int)GAME_SCENE_OVER:
@@ -380,6 +384,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	DxLib_End();		//ＤＸライブラリ使用の終了処理
+
+	return 0;
 }
 
 VOID ALL_KEYDOWN_UPDATE(VOID)
@@ -464,6 +470,90 @@ BOOL GAZOU_LOAD(GAZOU* g, int x, int y, const char* path)
 
 	return TRUE;
 }
+//プレイヤーを表示する関数
+VOID MY_PLAY_PLAYER_DRAW(VOID)
+{
+	////引き延ばして描画
+	//DrawExtendGraph(
+	//	Myplayer.X,
+	//	Myplayer.Y,
+	//	Myplayer.X + Myplayer.Width,
+	//	Myplayer.Y + Myplayer.Height + 4,
+	//	Myplayer.Handle[Myplayer.NowHandleNum], TRUE
+	//);
+
+	//普通に描画
+	DrawGraph(
+		Myplayer.X,
+		Myplayer.Y,
+		Myplayer.Handle[Myplayer.NowHandleNum],
+	TRUE
+	);
+
+	DrawBox(
+		Myplayer.atariRect.left,
+		Myplayer.atariRect.top,
+		Myplayer.atariRect.right,
+		Myplayer.atariRect.bottom,
+		GetColor(0, 0, 255), FALSE);
+
+	/*DrawFormatString(0, 40, GetColor(255, 255, 255), "プレイヤーの動いた距離 : %04d", Myplayer.MoveDist);	//動いた距離を表示
+	DrawFormatString(0, 60, GetColor(255, 255, 255), "プレイヤーX：%04d", Myplayer.X);	//プレイヤーのX位置を表示
+	DrawFormatString(0, 80, GetColor(255, 255, 255), "プレイヤーY：%04d", Myplayer.Y);	//プレイヤーのY位置を表示
+	DrawFormatString(0, 100, GetColor(255, 255, 255), "ジャンプ頂点：%04d", Myplayer.JumpMaxTop);	//プレイヤーのジャンプの頂点
+
+	//ジャンプ中
+	if (Myplayer.IsJumpNow == TRUE)
+	{
+		DrawString(0, 120, "ジャンプフラグON", GetColor(255, 255, 255));	//ジャンプ中
+	}
+
+	//頂点に達したとき
+	if (Myplayer.IsJumpTop == TRUE)
+	{
+		DrawString(0, 140, "頂点フラグON", GetColor(255, 255, 255));//ジャンプ中
+	}*/
+
+	return;
+}
+
+//MAPを分割して読み込む設定をする関数
+//引　数：MAP構造体　：設定する画像構造体(分割)の変数
+//引　数：int　：画像の分割数
+//引　数：int　：画像の横の分割数
+//引　数：int　：画像の縦の分割数
+//引　数：int　：画像の横の分割サイズ
+//引　数：int　：画像の縦の分割サイズ
+//引　数：const char *：読み込む画像のファイルパス
+//戻り値：BOOL：エラー時：FALSE
+BOOL MY_MAP_LOAD_BUNKATSU(MAP* m, int bun_num, int bun_x_num, int bun_y_num, int bun_width, int bun_height, const char* path)
+{
+	int ret = 0;	//ファイルパスをコピー
+	wsprintf(m->FilePath, path);
+
+	//元ネタはこちら　　　：https://brain.cc.kogakuin.ac.jp/~kanamaru/lecture/prog1/11-03.html
+	//リファレンスはこちら：https://dxlib.xsrv.jp/function/dxfunc_graph1.html#R3N3
+
+	//画像をメモリに分割して読み込み、ハンドルを取得
+	ret = LoadDivGraph(m->FilePath, bun_num, bun_x_num, bun_y_num, bun_width, bun_height, m->Handle);
+
+	if (ret == -1) { return FALSE; }	//画像読み込みエラー
+
+	for (int cnt = 0; cnt < GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT; cnt++)
+	{
+		//画像サイズ取得
+		GetGraphSize(
+			m->Handle[cnt],	//ハンドルから、画像の幅と高さを取得
+			&m->Width[cnt],	//MAP構造体の幅に、画像の幅を設定する
+			&m->Height[cnt]);	//MAP構造体の高さに、画像の高さを設定
+
+		m->C_Width[cnt] = m->Width[cnt] / 2;	//画像の横サイズの中心を取得
+		m->C_Height[cnt] = m->Height[cnt] / 2;	//画像の縦サイズの中心を取得
+	}
+	m->charaStopFlag = FALSE;
+
+	return TRUE;
+}
 
 VOID MY_PLAY_MAP_DRAW(VOID)
 {
@@ -506,72 +596,6 @@ VOID MY_PLAY_MAP_DRAW(VOID)
 	}
 }
 
-//プレイヤーを表示する関数
-VOID MY_PLAY_PLAYER_DRAW(VOID)
-{
-	DrawExtendGraph(
-		Myplayer.X,
-		Myplayer.Y,
-		Myplayer.X + Myplayer.Width,
-		Myplayer.Y + Myplayer.Height + 4,
-		Myplayer.Handle[Myplayer.NowHandleNum], TRUE
-	);
-
-	DrawBox(
-		Myplayer.atariRect.left,
-		Myplayer.atariRect.top,
-		Myplayer.atariRect.right,
-		Myplayer.atariRect.bottom,
-		GetColor(0, 0, 255), FALSE);
-
-	/*DrawFormatString(0, 40, GetColor(255, 255, 255), "プレイヤーの動いた距離 : %04d", Myplayer.MoveDist);	//動いた距離を表示
-	DrawFormatString(0, 60, GetColor(255, 255, 255), "プレイヤーX：%04d", Myplayer.X);	//プレイヤーのX位置を表示
-	DrawFormatString(0, 80, GetColor(255, 255, 255), "プレイヤーY：%04d", Myplayer.Y);	//プレイヤーのY位置を表示
-	DrawFormatString(0, 100, GetColor(255, 255, 255), "ジャンプ頂点：%04d", Myplayer.JumpMaxTop);	//プレイヤーのジャンプの頂点
-
-	//ジャンプ中
-	if (Myplayer.IsJumpNow == TRUE)
-	{
-		DrawString(0, 120, "ジャンプフラグON", GetColor(255, 255, 255));	//ジャンプ中
-	}
-
-	//頂点に達したとき
-	if (Myplayer.IsJumpTop == TRUE)
-	{
-		DrawString(0, 140, "頂点フラグON", GetColor(255, 255, 255));//ジャンプ中
-	}*/
-
-	return;
-}
-
-BOOL MY_MAP_LOAD_BUNKATSU(MAP* m, int bun_num, int bun_x_num, int bun_y_num, int bun_width, int bun_height, const char* path)
-{
-	int ret = 0;	//ファイルパスをコピー
-	wsprintf(m->FilePath, path);
-
-	//元ネタはこちら　　　：https://brain.cc.kogakuin.ac.jp/~kanamaru/lecture/prog1/11-03.html
-	//リファレンスはこちら：https://dxlib.xsrv.jp/function/dxfunc_graph1.html#R3N3
-
-	//画像をメモリに分割して読み込み、ハンドルを取得
-	ret = LoadDivGraph(m->FilePath, bun_num, bun_x_num, bun_y_num, bun_width, bun_height, m->Handle);
-
-	if (ret == -1) { return FALSE; }	//画像読み込みエラー
-
-	for (int cnt = 0; cnt < GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT; cnt++)
-	{
-		//画像サイズ取得
-		GetGraphSize(
-			m->Handle[cnt],	//ハンドルから、画像の幅と高さを取得
-			&m->Width[cnt],	//MAP構造体の幅に、画像の幅を設定する
-			&m->Height[cnt]);	//MAP構造体の高さに、画像の高さを設定
-
-		m->C_Width[cnt] = m->Width[cnt] / 2;	//画像の横サイズの中心を取得
-		m->C_Height[cnt] = m->Height[cnt] / 2;	//画像の縦サイズの中心を取得
-	}
-	m->charaStopFlag = FALSE;
-
-	return TRUE;
-}
 
 //########## CHARAを分割して読み込む設定をする関数 ##########
 //引　数：CHARA構造体　：設定する画像構造体(分割)の変数
@@ -660,6 +684,16 @@ BOOL MY_INIT_PLAYER(PLAYER* p, CHARA c, int* num, int x, int y, int speed)
 	//MY_SET_PLAYER_ATARI(p);	//プレイヤーの当たり判定の領域を設定する
 
 	return TRUE;
+}
+
+//ゲーム画面のスクロールを行う関数
+VOID MY_PLAY_SCROLL(VOID)
+{
+	ScrollCntYoko += ScrollDistPlusYoko;
+
+	DrawFormatString(0, 20, GetColor(255, 255, 255), "スクロールした量（横）:%06d", ScrollCntYoko);
+
+	return;
 }
 
 //ゲームマップのCSVを読み込む関数
@@ -765,9 +799,250 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 	return TRUE;
 }
 
-//プレイ画面の関数
-VOID MY_GAME_PLAY(VOID)
+//プレイヤーを操作する関数
+VOID MY_PLAY_PLAYER_OPERATION(VOID)
 {
-	MY_PLAY_MAP_DRAW();			//マップを描画
-	MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
+	BOOL IsKeyDown = FALSE;
+
+	BOOL CanMoveLeft = TRUE;	//左に行けるか
+	BOOL CanMoveRight = TRUE;	//右に行けるか
+
+	//プレイヤーの位置がマップ配列のどこにいるか変換
+	int PlayerToMapNumY;
+	//プレイヤーの【移動した位置】がマップ配列のどこにいるか変換	※プレイヤーの位置は、スクロール時、変わらないため
+	//キャラの位置を、１マップの半分の位置にする
+	int PlayerToMapNumX;
+
+	if (AllKeyState[KEY_INPUT_LEFT] != 0)	//左矢印キーが押されていたとき
+	{
+		IsKeyDown = TRUE;//キーを押された
+
+		if (Myplayer.NowHandleCnt < Myplayer.NowHandleCntMAX)
+		{
+			Myplayer.NowHandleCnt++;
+		}
+		else
+		{
+			Myplayer.NowHandleCnt = 0;
+
+			if (Myplayer.NowHandleNum >= 3 && Myplayer.NowHandleNum < 5)
+			{
+				Myplayer.NowHandleNum++;//次の左向きの画像
+			}
+			else
+			{
+				Myplayer.NowHandleNum = 3;	//一番最初の左向きの画像
+			}
+		}
+
+		//左方向に、まだ動ける
+		Myplayer.CanMoveLeft = TRUE;
+
+		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		//Myplayer.atariRect.left -= 12;	//少し、当たり判定の領域を左にずらす
+		//Myplayer.atariRect.right -= 12;	//少し、当たり判定の領域を左にずらす
+
+		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_LeftNG) == TRUE)//左に行けないモノと当たったとき
+		//{
+		//	Myplayer.CanMoveLeft = FALSE;//左に行けない
+		//}
+
+		//if (Myplayer.CanMoveLeft == TRUE)	//左に移動できるとき
+		//{
+		//	if (MapImage.charaStopFlag == FALSE)	//プレイヤーが移動できるとき
+		//	{
+		//		if (Myplayer.X > 0)
+		//		{
+		//			Myplayer.X -= Myplayer.Speed;	//プレイヤーを左に移動
+		//		}
+		//	}
+
+		//	if (Myplayer.MoveDist > 0)
+		//	{
+		//		Myplayer.MoveDist -= Myplayer.Speed;	//動いた距離を計算
+		//	}
+		//}
+
+	}
+
+	if (AllKeyState[KEY_INPUT_RIGHT] != 0)	//右矢印キーが押されていたとき
+	{
+		IsKeyDown = TRUE;//キーを押された
+
+		if (Myplayer.NowHandleCnt < Myplayer.NowHandleCntMAX)
+		{
+			Myplayer.NowHandleCnt++;
+		}
+		else
+		{
+			Myplayer.NowHandleCnt = 0;
+
+			if (Myplayer.NowHandleNum >= 9 && Myplayer.NowHandleNum < 11)
+			{
+				Myplayer.NowHandleNum++;//次の右向きの画像
+			}
+			else
+			{
+				Myplayer.NowHandleNum = 9;	//一番最初の右向きの画像
+			}
+		}
+
+		//右方向に、まだ動ける
+		//Myplayer.CanMoveRight = TRUE;
+
+		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		//Myplayer.atariRect.left += 12;	//少し、プレイヤーの当たり判定の領域を右にずらす
+		//Myplayer.atariRect.right += 12;	//少し、プレイヤーの当たり判定の領域を右にずらす
+
+		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_RightNG) == TRUE)//右に行けないモノと当たったとき
+		//{
+		//	Myplayer.CanMoveRight = FALSE;//左に行けない
+		//}
+
+		if (Myplayer.CanMoveRight == TRUE)	//右に移動できるとき
+		{
+			if (MapImage.charaStopFlag == FALSE)	//プレイヤーが移動できるとき
+			{
+				if (Myplayer.X + Myplayer.Width < GAME_WIDTH)
+				{
+					Myplayer.X += Myplayer.Speed;	//プレイヤーを右に移動
+				}
+			}
+
+			if (Myplayer.MoveDist < GAME_MAP_YOKO_SIZE * GAME_MAP_YOKO)
+			{
+				Myplayer.MoveDist += Myplayer.Speed;	//動いた距離を計算
+			}
+		}
+	}
+
+	//マップの左側にいるときは、プレイヤーを動かす
+	if (Myplayer.MoveDist > 0 &&
+		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 7)	//プレイヤーの動いた距離が一定以上あれば（開始地点）
+	{
+		MapImage.charaStopFlag = FALSE;					//マップを止めて、プレイヤーを動かす
+	}
+
+	////マップ真ん中らへんにいるときは、マップを動かす
+	//if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 7 &&
+	//	Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 145)	//プレイヤーの動いた距離が一定以上あれば(開始地点)
+	//{
+	//	MapImage.charaStopFlag = TRUE;					//マップを動かす
+
+	//	if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 70 &&
+	//		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 96)
+	//	{
+	//		Myplayer.Speed = 5;
+	//	}
+	//	if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 96 &&
+	//		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 110)
+	//	{
+	//		Myplayer.Speed = 2;
+	//	}
+	//	if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 110 &&
+	//		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 145)
+	//	{
+	//		Myplayer.Speed = 3;
+	//	}
+	//}
+	//マップの右側にいるときは、プレイヤーを動かす
+	//if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 145 &&
+	//	Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * GAME_MAP_YOKO)	//プレイヤーの動いた距離が一定以上あれば(終了地点)
+	//{
+	//	MapImage.charaStopFlag = FALSE;					//マップを止めて、プレイヤーを動かす
+	//}
+
+
+
+	if (IsKeyDown == FALSE)
+	{
+		if (Myplayer.NowHandleNum >= 3 && Myplayer.NowHandleNum <= 5)
+		{
+			//押されてないときは右向きの立ちポーズ
+			Myplayer.NowHandleNum = 4;
+		}
+		else if (Myplayer.NowHandleNum >= 9 && Myplayer.NowHandleNum <= 11)
+		{
+			//押されてないときは左向きの立ちポーズ
+			Myplayer.NowHandleNum = 10;
+		}
+		Myplayer.NowHandleCnt = Myplayer.NowHandleCntMAX - 1;	//すぐ画像を変えられるようにする
+	}
+
+	//参考はこちら
+	//https://dixq.net/g/30.html
+
+		if (AllKeyState[KEY_INPUT_LEFT] != 0)	//左矢印キーが押されていたとき
+		{
+			IsKeyDown = TRUE;//キーを押された
+
+			if (Myplayer.NowHandleCnt < Myplayer.NowHandleCntMAX)
+			{
+				Myplayer.NowHandleCnt++;
+			}
+			else
+			{
+				Myplayer.NowHandleCnt = 0;
+
+				if (Myplayer.NowHandleNum >= 3 && Myplayer.NowHandleNum < 5)
+				{
+					Myplayer.NowHandleNum++;//次の左向きの画像
+				}
+				else
+				{
+					Myplayer.NowHandleNum = 3;	//一番最初の左向きの画像
+				}
+			}
+		}
+
+		if (AllKeyState[KEY_INPUT_RIGHT] != 0)	//右矢印キーが押されていたとき
+		{
+			IsKeyDown = TRUE;//キーを押された
+
+			if (Myplayer.NowHandleCnt < Myplayer.NowHandleCntMAX)
+			{
+				Myplayer.NowHandleCnt++;
+			}
+			else
+			{
+				Myplayer.NowHandleCnt = 0;
+
+				if (Myplayer.NowHandleNum >= 9 && Myplayer.NowHandleNum < 11)
+				{
+					Myplayer.NowHandleNum++;//次の右向きの画像
+				}
+				else
+				{
+					Myplayer.NowHandleNum = 9;	//一番最初の右向きの画像
+				}
+			}
+		}
+	}
+
+	//マップの当たり判定もスクロールさせる
+	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
+	//	{
+	//		rectMap_DownNG[tate][yoko].left = rectMap_DownNG_First[tate][yoko].left - ScrollCntYoko;
+	//		rectMap_DownNG[tate][yoko].right = rectMap_DownNG_First[tate][yoko].right - ScrollCntYoko;
+
+	//		rectMap_DownOK[tate][yoko].left = rectMap_DownOK_First[tate][yoko].left - ScrollCntYoko;
+	//		rectMap_DownOK[tate][yoko].right = rectMap_DownOK_First[tate][yoko].right - ScrollCntYoko;
+
+	//		rectMap_LeftNG[tate][yoko].left = rectMap_LeftNG_First[tate][yoko].left - ScrollCntYoko;
+	//		rectMap_LeftNG[tate][yoko].right = rectMap_LeftNG_First[tate][yoko].right - ScrollCntYoko;
+
+	//		rectMap_RightNG[tate][yoko].left = rectMap_RightNG_First[tate][yoko].left - ScrollCntYoko;
+	//		rectMap_RightNG[tate][yoko].right = rectMap_RightNG_First[tate][yoko].right - ScrollCntYoko;
+
+	//		rectMap_UpNG[tate][yoko].left = rectMap_UpNG_First[tate][yoko].left - ScrollCntYoko;
+	//		rectMap_UpNG[tate][yoko].right = rectMap_UpNG_First[tate][yoko].right - ScrollCntYoko;
+
+	//		rectMap_Coin[tate][yoko].left = rectMap_Coin_First[tate][yoko].left - ScrollCntYoko;
+	//		rectMap_Coin[tate][yoko].right = rectMap_Coin_First[tate][yoko].right - ScrollCntYoko;
+	//	}
+	//}
+
+	return;
 }
