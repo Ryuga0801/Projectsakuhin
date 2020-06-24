@@ -152,6 +152,8 @@ struct STRUCT_PLAYER
 
 	BOOL CanMoveLeft;					//左に行けるか
 	BOOL CanMoveRight;					//右に行けるか
+	BOOL CanMoveUp;						//上に行けるか
+	BOOL CanMoveDown;					//下に行けるか
 
 	int atariX;			//当たり判定のX位置
 	int atariY;			//当たり判定のY位置
@@ -224,6 +226,8 @@ VOID FPS_DRAW(VOID);
 VOID FPS_WAIT(VOID);
 
 VOID MY_PLAY_PLAYER_DRAW(VOID);		//プレイヤーを表示する関数
+
+VOID MY_PLAY_PLAYER_OPERATION(VOID);	//プレイヤーを操作する関数
 
 VOID MY_PLAY_MAP_DRAW(VOID);	//マップを表示する関数
 
@@ -339,6 +343,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			MY_PLAY_MAP_DRAW();			//マップを描画
 			DrawGraph(map.X, map.Y, map.Handle, TRUE);
 			MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
+			MY_PLAY_PLAYER_OPERATION();	//プレイヤーを操作
+
 			break;
 
 		case(int)GAME_SCENE_OVER:
@@ -806,6 +812,8 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 
 	BOOL CanMoveLeft = TRUE;	//左に行けるか
 	BOOL CanMoveRight = TRUE;	//右に行けるか
+	BOOL CanMoveUp = TRUE;		//上に行けるか
+	BOOL CanMoveDown = TRUE;	//下に行けるか
 
 	//プレイヤーの位置がマップ配列のどこにいるか変換
 	int PlayerToMapNumY;
@@ -847,21 +855,21 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		//	Myplayer.CanMoveLeft = FALSE;//左に行けない
 		//}
 
-		//if (Myplayer.CanMoveLeft == TRUE)	//左に移動できるとき
-		//{
-		//	if (MapImage.charaStopFlag == FALSE)	//プレイヤーが移動できるとき
-		//	{
-		//		if (Myplayer.X > 0)
-		//		{
-		//			Myplayer.X -= Myplayer.Speed;	//プレイヤーを左に移動
-		//		}
-		//	}
+		if (Myplayer.CanMoveLeft == TRUE)	//左に移動できるとき
+		{
+			if (MapImage.charaStopFlag == FALSE)	//プレイヤーが移動できるとき
+			{
+				if (Myplayer.X > 0)
+				{
+					Myplayer.X -= Myplayer.Speed;	//プレイヤーを左に移動
+				}
+			}
 
-		//	if (Myplayer.MoveDist > 0)
-		//	{
-		//		Myplayer.MoveDist -= Myplayer.Speed;	//動いた距離を計算
-		//	}
-		//}
+			if (Myplayer.MoveDist > 0)
+			{
+				Myplayer.MoveDist -= Myplayer.Speed;	//動いた距離を計算
+			}
+		}
 
 	}
 
@@ -888,7 +896,7 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		}
 
 		//右方向に、まだ動ける
-		//Myplayer.CanMoveRight = TRUE;
+		Myplayer.CanMoveRight = TRUE;
 
 		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
 		//Myplayer.atariRect.left += 12;	//少し、プレイヤーの当たり判定の領域を右にずらす
@@ -896,7 +904,7 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 
 		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_RightNG) == TRUE)//右に行けないモノと当たったとき
 		//{
-		//	Myplayer.CanMoveRight = FALSE;//左に行けない
+		//	Myplayer.CanMoveRight = FALSE;//右に行けない
 		//}
 
 		if (Myplayer.CanMoveRight == TRUE)	//右に移動できるとき
@@ -916,12 +924,115 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		}
 	}
 
-	//マップの左側にいるときは、プレイヤーを動かす
-	if (Myplayer.MoveDist > 0 &&
-		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 7)	//プレイヤーの動いた距離が一定以上あれば（開始地点）
+	if (AllKeyState[KEY_INPUT_UP] != 0)	//上矢印キーが押されていたとき
 	{
-		MapImage.charaStopFlag = FALSE;					//マップを止めて、プレイヤーを動かす
+		IsKeyDown = TRUE;//キーを押された
+
+		if (Myplayer.NowHandleCnt < Myplayer.NowHandleCntMAX)
+		{
+			Myplayer.NowHandleCnt++;
+		}
+		else
+		{
+			Myplayer.NowHandleCnt = 0;
+
+			if (Myplayer.NowHandleNum >= 0 && Myplayer.NowHandleNum < 2)
+			{
+				Myplayer.NowHandleNum++;//次の上向きの画像
+			}
+			else
+			{
+				Myplayer.NowHandleNum = 0;	//一番最初の上向きの画像
+			}
+		}
+
+		//上方向に、まだ動ける
+		Myplayer.CanMoveUp = TRUE;
+
+		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		//Myplayer.atariRect.left -= 12;	//少し、当たり判定の領域を上にずらす
+		//Myplayer.atariRect.right -= 12;	//少し、当たり判定の領域を上にずらす
+
+		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_LeftNG) == TRUE)//上に行けないモノと当たったとき
+		//{
+		//	Myplayer.CanMoveLeft = FALSE;//上に行けない
+		//}
+
+		if (Myplayer.CanMoveUp == TRUE)	//上に移動できるとき
+		{
+			if (MapImage.charaStopFlag == FALSE)	//プレイヤーが移動できるとき
+			{
+				if (Myplayer.Y > 0)
+				{
+					Myplayer.Y -= Myplayer.Speed;	//プレイヤーを上に移動
+				}
+			}
+
+			if (Myplayer.MoveDist > 0)
+			{
+				Myplayer.MoveDist -= Myplayer.Speed;	//動いた距離を計算
+			}
+		}
+
 	}
+
+	if (AllKeyState[KEY_INPUT_DOWN] != 0)	//下矢印キーが押されていたとき
+	{
+		IsKeyDown = TRUE;//キーを押された
+
+		if (Myplayer.NowHandleCnt < Myplayer.NowHandleCntMAX)
+		{
+			Myplayer.NowHandleCnt++;
+		}
+		else
+		{
+			Myplayer.NowHandleCnt = 0;
+
+			if (Myplayer.NowHandleNum >= 6 && Myplayer.NowHandleNum < 8)
+			{
+				Myplayer.NowHandleNum++;//次の下向きの画像
+			}
+			else
+			{
+				Myplayer.NowHandleNum = 6;	//一番最初の下向きの画像
+			}
+		}
+
+		//下方向に、まだ動ける
+		Myplayer.CanMoveDown = TRUE;
+
+		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		//Myplayer.atariRect.left += 12;	//少し、プレイヤーの当たり判定の領域を下にずらす
+		//Myplayer.atariRect.right += 12;	//少し、プレイヤーの当たり判定の領域を下にずらす
+
+		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_DownNG) == TRUE)//下に行けないモノと当たったとき
+		//{
+		//	Myplayer.CanMoveDown = FALSE;//下に行けない
+		//}
+
+		if (Myplayer.CanMoveDown == TRUE)	//下に移動できるとき
+		{
+			if (MapImage.charaStopFlag == FALSE)	//プレイヤーが移動できるとき
+			{
+				if (Myplayer.Y + Myplayer.Height < GAME_HEIGHT)
+				{
+					Myplayer.Y += Myplayer.Speed;	//プレイヤーを下に移動
+				}
+			}
+
+			if (Myplayer.MoveDist < GAME_MAP_TATE_SIZE * GAME_MAP_TATE)
+			{
+				Myplayer.MoveDist += Myplayer.Speed;	//動いた距離を計算
+			}
+		}
+	}
+
+	////マップの左側にいるときは、プレイヤーを動かす
+	//if (Myplayer.MoveDist > 0 &&
+	//	Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 7)	//プレイヤーの動いた距離が一定以上あれば（開始地点）
+	//{
+	//	MapImage.charaStopFlag = FALSE;					//マップを止めて、プレイヤーを動かす
+	//}
 
 	////マップ真ん中らへんにいるときは、マップを動かす
 	//if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 7 &&
@@ -1017,7 +1128,7 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 				}
 			}
 		}
-	}
+	
 
 	//マップの当たり判定もスクロールさせる
 	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
