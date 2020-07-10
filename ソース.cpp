@@ -17,7 +17,14 @@
 #define GAME_OVER  "gazou\\gameover.png"
 #define GAME_SOUSA "gazou\\sousasetumei.png"
 
-#define GAME_PLAYER "chara\\chara.png"
+#define GAME_PLAYER "chara\\chara3.png"
+
+#define GAME_ENEMY_PANDA   "chara\\panda.png"
+#define GAME_ENEMY_KIRIN   "chara\\kirin.png"
+#define GAME_ENEMY_COW	   "chara\\cow.png"
+#define GAME_ENEMY_HAMSTER "chara\\hamster.png"
+#define GAME_ENEMY_HARI	   "chara\\hari.png"
+#define GAME_ENEMY_LION	   "chara\\lion.png"
 
 #define GAME_MAP_PNG			 "map\\mapdata2.png"
 #define GAME_MAP_CSV_SAIKASO	 "map\\mapdata_saikaso.csv"
@@ -34,8 +41,8 @@
 #define GAME_CHARA_BUN_YOKO_CNT 12	//キャラの分割数（横）
 #define GAME_CHARA_BUN_TATE_CNT 8	//キャラの分割数（縦）
 
-#define GAME_CHARA_YOKO_SIZE 24		//キャラの大きさ（横）	//ツチノコの場合：48	サーナイトの場合：24
-#define GAME_CHARA_TATE_SIZE 32		//キャラの大きさ（縦）	//ツチノコの場合：48	サーナイトの場合：32
+#define GAME_CHARA_YOKO_SIZE 26		//キャラの大きさ（横）	//ツチノコの場合：48	サーナイトの場合：24
+#define GAME_CHARA_TATE_SIZE 26		//キャラの大きさ（縦）	//ツチノコの場合：48	サーナイトの場合：32
 
 #define GAME_CHARA_MOTION_NUM 12	//キャラの画像数
 
@@ -103,7 +110,7 @@ struct STRUCT_GAZOU
 struct STRUCT_MAP
 {
 	char FilePath[128];	//ファイルのパス
-	int Handle[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	//画像のハンドル
+	int Handle[GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT];	//画像のハンドル
 	int X[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];			//横の位置
 	int Y[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];			//縦の位置
 	int Width[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];		//横のサイズ
@@ -112,12 +119,6 @@ struct STRUCT_MAP
 	int C_Height[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	//縦の中心位置
 
 	BOOL charaStopFlag;	//キャラの移動制御フラグ
-
-	//BOOL GoalFlg;		//このマップをゴールしたか
-
-	//int GameEndKind;	//ゲーム終了の種類
-
-	//BOOL GoalEffect1;	//ゴールした時の演出１
 
 };//MAP構造体
 
@@ -180,6 +181,13 @@ GAZOU over;
 GAZOU clear;
 GAZOU map;
 
+GAZOU panda;
+GAZOU kirin;
+GAZOU cow;
+GAZOU hamster;
+GAZOU hari;
+GAZOU lion;
+
 MAP MapImage;	//マップの画像
 
 CHARA CharaImage;	//キャラの画像
@@ -187,10 +195,10 @@ PLAYER Myplayer;	//プレイヤー
 
 // プレイヤーのイメージ画像の番号を設定する
 int PlayerImageNum[GAME_CHARA_MOTION_NUM] = {		//ツチノコの場合		//サーナイトの場合
-	9,10,11,	//上									//39,40,41,	//上		//84,85,86,	//上	
-	45,46,47,	//左									//15,16,17,	//左		//60,61,62,	//左	
-	33,34,35,	//下										//3,4,5,	//下		//48,49,50,	//下
-	21,22,23	//右									//27,28,29	//右		//72,73,74,	//右	
+	39,40,41,	//上									//39,40,41,	//上		//84,85,86,	//上	
+	15,16,17,	//左									//15,16,17,	//左		//60,61,62,	//左	
+	3,4,5,	//下										//3,4,5,	//下		//48,49,50,	//下
+	27,28,29	//右									//27,28,29	//右		//72,73,74,	//右	
 
 };
 
@@ -277,13 +285,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SetDrawScreen(DX_SCREEN_BACK);
 
+	/*if (GAZOU_LOAD(&panda, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&kirin, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&cow, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&hamster, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&hari, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&lion, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }*/
+
 	if (GAZOU_LOAD(&title, 0, 0, GAME_TITLE) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&sousa, 0, 0, GAME_SOUSA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&over, 0, 0, GAME_OVER) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&clear, 0, 0, GAME_CLEAR) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&map, 0, 0, GAME_MAP_PNG) == FALSE) { return -1; }
 
-	//if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, 8, 8, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
+	//if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, GAME_MAP_YOKO_SIZE, GAME_MAP_TATE_SIZE, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
 
 	if (MY_CHARA_LOAD_BUNKATSU(&CharaImage, GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_BUN_YOKO_CNT, GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_YOKO_SIZE, GAME_CHARA_TATE_SIZE, GAME_PLAYER) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotFound", MB_OK); return -1; }	//CHARAを読み込む
 	
@@ -310,6 +325,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		case(int)GAME_SCENE_TITLE:
 
 			DrawGraph(title.X, title.Y, title.Handle, TRUE);
+			DrawExtendGraph(250, 250, 250 + 160, 250 + 120, panda.Handle, TRUE);
 
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
@@ -506,19 +522,7 @@ VOID MY_PLAY_PLAYER_DRAW(VOID)
 	/*DrawFormatString(0, 40, GetColor(255, 255, 255), "プレイヤーの動いた距離 : %04d", Myplayer.MoveDist);	//動いた距離を表示
 	DrawFormatString(0, 60, GetColor(255, 255, 255), "プレイヤーX：%04d", Myplayer.X);	//プレイヤーのX位置を表示
 	DrawFormatString(0, 80, GetColor(255, 255, 255), "プレイヤーY：%04d", Myplayer.Y);	//プレイヤーのY位置を表示
-	DrawFormatString(0, 100, GetColor(255, 255, 255), "ジャンプ頂点：%04d", Myplayer.JumpMaxTop);	//プレイヤーのジャンプの頂点
-
-	//ジャンプ中
-	if (Myplayer.IsJumpNow == TRUE)
-	{
-		DrawString(0, 120, "ジャンプフラグON", GetColor(255, 255, 255));	//ジャンプ中
-	}
-
-	//頂点に達したとき
-	if (Myplayer.IsJumpTop == TRUE)
-	{
-		DrawString(0, 140, "頂点フラグON", GetColor(255, 255, 255));//ジャンプ中
-	}*/
+	DrawFormatString(0, 100, GetColor(255, 255, 255), "ジャンプ頂点：%04d", Myplayer.JumpMaxTop);	//プレイヤーのジャンプの頂点*/
 
 	return;
 }
@@ -549,8 +553,8 @@ BOOL MY_MAP_LOAD_BUNKATSU(MAP* m, int bun_num, int bun_x_num, int bun_y_num, int
 	{
 		//画像サイズ取得
 		GetGraphSize(
-			m->Handle[cnt],	//ハンドルから、画像の幅と高さを取得
-			&m->Width[cnt],	//MAP構造体の幅に、画像の幅を設定する
+			m->Handle[cnt],		//ハンドルから、画像の幅と高さを取得
+			&m->Width[cnt],		//MAP構造体の幅に、画像の幅を設定する
 			&m->Height[cnt]);	//MAP構造体の高さに、画像の高さを設定
 
 		m->C_Width[cnt] = m->Width[cnt] / 2;	//画像の横サイズの中心を取得
