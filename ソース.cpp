@@ -27,7 +27,7 @@
 #define GAME_ENEMY_LION	   "chara\\lion.png"
 
 #define GAME_MAP_PNG			 "map\\mapdata2.png"
-#define GAME_MAP_CSV_SAIKASO	 "map\\mapdata_saikaso.csv"
+#define GAME_MAP_CSV_SAIKASO	 "map\\mapdata2.csv"
 
 #define GAME_MAP_BUN_YOKO_CNT 86	//マップの分割数（横）
 #define GAME_MAP_BUN_TATE_CNT 46    //マップの分割数（縦）
@@ -110,13 +110,13 @@ struct STRUCT_GAZOU
 struct STRUCT_MAP
 {
 	char FilePath[128];	//ファイルのパス
-	int Handle[GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT];	//画像のハンドル
-	int X[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];			//横の位置
-	int Y[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];			//縦の位置
-	int Width[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];		//横のサイズ
-	int Height[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	//縦のサイズ
-	int C_Width[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	//横の中心位置
-	int C_Height[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	//縦の中心位置
+	int Handle[GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT];	 //画像のハンドル
+	int X[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];		 //横の位置
+	int Y[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];		 //縦の位置
+	int Width[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	 //横のサイズ
+	int Height[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	 //縦のサイズ
+	int C_Width[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT];	 //横の中心位置
+	int C_Height[GAME_MAP_BUN_YOKO_CNT * GAME_MAP_BUN_TATE_CNT]; //縦の中心位置
 
 	BOOL charaStopFlag;	//キャラの移動制御フラグ
 
@@ -125,13 +125,13 @@ struct STRUCT_MAP
 struct STRUCT_CHARACTOR
 {
 	char FilePath[128];	//ファイルのパス
-	int Handle[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	//画像のハンドル
-	int X[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];		//横の位置
-	int Y[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];		//縦の位置
-	int Width[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	//横のサイズ
-	int Height[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	//縦のサイズ
-	int C_Width[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	//横の中心位置
-	int C_Height[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	//縦の中心位置
+	int Handle[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	 //画像のハンドル
+	int X[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];		 //横の位置
+	int Y[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];		 //縦の位置
+	int Width[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	 //横のサイズ
+	int Height[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	 //縦のサイズ
+	int C_Width[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT];	 //横の中心位置
+	int C_Height[GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT]; //縦の中心位置
 };//CHARA構造体
 
 struct STRUCT_PLAYER
@@ -296,9 +296,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (GAZOU_LOAD(&sousa, 0, 0, GAME_SOUSA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&over, 0, 0, GAME_OVER) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&clear, 0, 0, GAME_CLEAR) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&map, 0, 0, GAME_MAP_PNG) == FALSE) { return -1; }
+	//if (GAZOU_LOAD(&map, 0, 0, GAME_MAP_PNG) == FALSE) { return -1; }
 
-	//if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_BUN_YOKO_CNT, GAME_MAP_YOKO_SIZE, GAME_MAP_TATE_SIZE, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
+	if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_YOKO_SIZE, GAME_MAP_TATE_SIZE, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
 
 	if (MY_CHARA_LOAD_BUNKATSU(&CharaImage, GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_BUN_YOKO_CNT, GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_YOKO_SIZE, GAME_CHARA_TATE_SIZE, GAME_PLAYER) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotFound", MB_OK); return -1; }	//CHARAを読み込む
 	
@@ -357,7 +357,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
 			MY_PLAY_MAP_DRAW();			//マップを描画
-			DrawGraph(map.X, map.Y, map.Handle, TRUE);
 			MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
 			MY_PLAY_PLAYER_OPERATION();	//プレイヤーを操作
 
@@ -731,80 +730,80 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 
 	int cnt;
 
-	//マップを当たり判定の領域に変換
-	for (int tate = 0; tate < GAME_MAP_TATE; tate++)
-	{
-		for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
-		{
-			for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
-			{
-				if (MapData[tate][yoko] == MapNotDownKind[cnt])
-				{
-					rectMap_DownNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-					rectMap_DownNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-					rectMap_DownNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-					rectMap_DownNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+	////マップを当たり判定の領域に変換
+	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
+	//	{
+	//		for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
+	//		{
+	//			if (MapData[tate][yoko] == MapNotDownKind[cnt])
+	//			{
+	//				rectMap_DownNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_DownNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_DownNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_DownNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-					rectMap_DownNG_First[tate][yoko] = rectMap_DownNG[tate][yoko];	//初期位置を設定
+	//				rectMap_DownNG_First[tate][yoko] = rectMap_DownNG[tate][yoko];	//初期位置を設定
 
-				}
-			}
+	//			}
+	//		}
 
-			for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
-			{
-				if (MapData[tate][yoko] == MapOKDownKind[cnt])
-				{
-					rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-					rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-					rectMap_DownOK[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-					rectMap_DownOK[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+	//		for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
+	//		{
+	//			if (MapData[tate][yoko] == MapOKDownKind[cnt])
+	//			{
+	//				rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_DownOK[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_DownOK[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-					rectMap_DownOK_First[tate][yoko] = rectMap_DownOK[tate][yoko];//初期位置を設定
-				}
-			}
+	//				rectMap_DownOK_First[tate][yoko] = rectMap_DownOK[tate][yoko];//初期位置を設定
+	//			}
+	//		}
 
-			for (cnt = 0; cnt < GAME_MAP_NOTLEFT_KIND; cnt++)			//左に行けないマップ
-			{
-				if (MapData[tate][yoko] == MapNotLeftKind[cnt])
-				{
-					rectMap_LeftNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-					rectMap_LeftNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-					rectMap_LeftNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-					rectMap_LeftNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+	//		for (cnt = 0; cnt < GAME_MAP_NOTLEFT_KIND; cnt++)			//左に行けないマップ
+	//		{
+	//			if (MapData[tate][yoko] == MapNotLeftKind[cnt])
+	//			{
+	//				rectMap_LeftNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_LeftNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_LeftNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_LeftNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-					rectMap_LeftNG_First[tate][yoko] = rectMap_LeftNG[tate][yoko];	//初期位置を設定
+	//				rectMap_LeftNG_First[tate][yoko] = rectMap_LeftNG[tate][yoko];	//初期位置を設定
 
-				}
-			}
-			for (cnt = 0; cnt < GAME_MAP_NOTRIGHT_KIND; cnt++)			//右に行けないマップ
-			{
-				if (MapData[tate][yoko] == MapNotRightKind[cnt])
-				{
-					rectMap_RightNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-					rectMap_RightNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-					rectMap_RightNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-					rectMap_RightNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+	//			}
+	//		}
+	//		for (cnt = 0; cnt < GAME_MAP_NOTRIGHT_KIND; cnt++)			//右に行けないマップ
+	//		{
+	//			if (MapData[tate][yoko] == MapNotRightKind[cnt])
+	//			{
+	//				rectMap_RightNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_RightNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_RightNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_RightNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-					rectMap_RightNG_First[tate][yoko] = rectMap_RightNG[tate][yoko];	//初期位置を設定
+	//				rectMap_RightNG_First[tate][yoko] = rectMap_RightNG[tate][yoko];	//初期位置を設定
 
-				}
-			}
-			for (cnt = 0; cnt < GAME_MAP_NOTUP_KIND; cnt++)			//上に行けないマップ
-			{
-				if (MapData[tate][yoko] == MapNotUpKind[cnt])
-				{
-					rectMap_UpNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-					rectMap_UpNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-					rectMap_UpNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-					rectMap_UpNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+	//			}
+	//		}
+	//		for (cnt = 0; cnt < GAME_MAP_NOTUP_KIND; cnt++)			//上に行けないマップ
+	//		{
+	//			if (MapData[tate][yoko] == MapNotUpKind[cnt])
+	//			{
+	//				rectMap_UpNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_UpNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_UpNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_UpNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-					rectMap_UpNG_First[tate][yoko] = rectMap_UpNG[tate][yoko];	//初期位置を設定
+	//				rectMap_UpNG_First[tate][yoko] = rectMap_UpNG[tate][yoko];	//初期位置を設定
 
-				}
-			}
+	//			}
+	//		}
 
-		}
-	}
+	//	}
+	//}
 
 	return TRUE;
 }
