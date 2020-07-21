@@ -27,7 +27,7 @@
 #define GAME_ENEMY_LION	   "chara\\lion.png"
 
 #define GAME_MAP_PNG			 "map\\mapdata2.png"
-#define GAME_MAP_CSV_SAIKASO	 "map\\mapdata2.csv"
+#define GAME_MAP_CSV_SAIKASO	 "map\\mapdata_saikaso.csv"
 
 #define GAME_MAP_BUN_YOKO_CNT 86	//マップの分割数（横）
 #define GAME_MAP_BUN_TATE_CNT 46    //マップの分割数（縦）
@@ -574,10 +574,9 @@ VOID MY_PLAY_MAP_DRAW(VOID)
 				(yoko + 0) * GAME_MAP_YOKO_SIZE - ScrollCntYoko <= GAME_WIDTH)	//画面に写っているならばならば
 			{
 				DrawGraph(
-					yoko * GAME_MAP_YOKO_SIZE,			//位置からスクロール量を引く
+					yoko * GAME_MAP_YOKO_SIZE - ScrollCntYoko,			//位置からスクロール量を引く
 					tate * GAME_MAP_TATE_SIZE,
-					MapImage.Handle[tate * GAME_CHARA_BUN_YOKO_CNT + yoko], TRUE);	//マップをスクロールしながら描画
-
+					MapImage.Handle[MapData[tate][yoko]], TRUE);
 				//DrawBox(
 				//	rectMap_DownNG[tate][yoko].left,
 				//	rectMap_DownNG[tate][yoko].top,
