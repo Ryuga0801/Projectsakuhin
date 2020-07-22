@@ -28,6 +28,8 @@
 
 #define GAME_MAP_PNG			 "map\\mapdata2.png"
 #define GAME_MAP_CSV_SAIKASO	 "map\\mapdata_saikaso.csv"
+#define GAME_MAP_CSV_WOOD		 "map\\mapdata_ki.csv"
+#define GAME_MAP_CSV_KABE		 "map\\mapdata_kabe.csv"
 
 #define GAME_MAP_BUN_YOKO_CNT 86	//マップの分割数（横）
 #define GAME_MAP_BUN_TATE_CNT 46    //マップの分割数（縦）
@@ -213,7 +215,11 @@ BOOL GAZOU_LOAD(GAZOU*, int, int, const char*);
 
 BOOL FONT_CREATE(const char*, int*, int, int, int);
 
-BOOL MY_MAP_READ_CSV_NUM(FILE*, const char*);
+BOOL MY_MAP_READ_CSV_NUM_SAIKASO(FILE*, const char*);
+
+BOOL MY_MAP_READ_CSV_NUM_KI(FILE*, const char*);
+
+BOOL MY_MAP_READ_CSV_NUM_KABE(FILE*, const char*);
 
 BOOL MY_MAP_LOAD_BUNKATSU(MAP*, int, int, int, int, int, const char*);	//MAPを分割して読み込む設定をする関数
 
@@ -241,8 +247,14 @@ VOID MY_PLAY_MAP_DRAW(VOID);	//マップを表示する関数
 
 VOID MY_GAME_PLAY(VOID);		//プレイ画面の関数
 
-int MapData[GAME_MAP_TATE][GAME_MAP_YOKO];	//マップのデータ
-int MapData_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
+int MapData_saikaso[GAME_MAP_TATE][GAME_MAP_YOKO];	//マップのデータ
+int MapData_saikaso_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
+
+int MapData_ki[GAME_MAP_TATE][GAME_MAP_YOKO];	//マップのデータ
+int MapData_ki_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
+
+int MapData_kabe[GAME_MAP_TATE][GAME_MAP_YOKO];	//マップのデータ
+int MapData_kabe_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
 
 FILE* fp_map_csv;		//ファイルの管理番号（ポインタ≒ハンドル）
 
@@ -304,7 +316,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	
 	if (MY_INIT_PLAYER(&Myplayer,CharaImage,&PlayerImageNum[0],100,100,4) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotInitPlayer", MB_OK); return -1; }
 
-	if (MY_MAP_READ_CSV_NUM(fp_map_csv, GAME_MAP_CSV_SAIKASO) == FALSE) { MessageBox(NULL, GAME_MAP_CSV_SAIKASO, "NotFound", MB_OK); return -1; }	//CSVを読み込む
+	if (MY_MAP_READ_CSV_NUM_SAIKASO(fp_map_csv, GAME_MAP_CSV_SAIKASO) == FALSE) { MessageBox(NULL, GAME_MAP_CSV_SAIKASO, "NotFound", MB_OK); return -1; }	//CSVを読み込む
+	if (MY_MAP_READ_CSV_NUM_KI(fp_map_csv, GAME_MAP_CSV_WOOD) == FALSE) { MessageBox(NULL, GAME_MAP_CSV_WOOD, "NotFound", MB_OK); return -1; }	//CSVを読み込む
+	if (MY_MAP_READ_CSV_NUM_KABE(fp_map_csv, GAME_MAP_CSV_KABE) == FALSE) { MessageBox(NULL, GAME_MAP_CSV_KABE, "NotFound", MB_OK); return -1; }	//CSVを読み込む
 
 	if (FONT_CREATE(FNT_TANU_NAME, &HFontTanu_32, 32, 1, DX_FONTTYPE_ANTIALIASING_EDGE) == FALSE) { return -1; }
 
@@ -576,28 +590,17 @@ VOID MY_PLAY_MAP_DRAW(VOID)
 				DrawGraph(
 					yoko * GAME_MAP_YOKO_SIZE - ScrollCntYoko,			//位置からスクロール量を引く
 					tate * GAME_MAP_TATE_SIZE,
-					MapImage.Handle[MapData[tate][yoko]], TRUE);
-				//DrawBox(
-				//	rectMap_DownNG[tate][yoko].left,
-				//	rectMap_DownNG[tate][yoko].top,
-				//	rectMap_DownNG[tate][yoko].right,
-				//	rectMap_DownNG[tate][yoko].bottom,
-				//	GetColor(255, 0, 0), FALSE//下に行けないマップ
-				//);
-				//DrawBox(
-				//	rectMap_DownOK[tate][yoko].left,
-				//	rectMap_DownOK[tate][yoko].top,
-				//	rectMap_DownOK[tate][yoko].right,
-				//	rectMap_DownOK[tate][yoko].bottom,
-				//	GetColor(0, 255, 255), FALSE//下に行けないマップ
-				//);
-				//DrawBox(
-				//	rectMap_Coin[tate][yoko].left,
-				//	rectMap_Coin[tate][yoko].top,
-				//	rectMap_Coin[tate][yoko].right,
-				//	rectMap_Coin[tate][yoko].bottom,
-				//	GetColor(255, 255, 0), FALSE//下に行けるマップ
-				//);
+					MapImage.Handle[MapData_saikaso[tate][yoko]], TRUE);
+
+				DrawGraph(
+					yoko * GAME_MAP_YOKO_SIZE - ScrollCntYoko,			//位置からスクロール量を引く
+					tate * GAME_MAP_TATE_SIZE,
+					MapImage.Handle[MapData_ki[tate][yoko]], TRUE);
+
+				DrawGraph(
+					yoko * GAME_MAP_YOKO_SIZE - ScrollCntYoko,			//位置からスクロール量を引く
+					tate * GAME_MAP_TATE_SIZE,
+					MapImage.Handle[MapData_kabe[tate][yoko]], TRUE);
 
 			}
 		}
@@ -704,9 +707,10 @@ VOID MY_PLAY_SCROLL(VOID)
 	return;
 }
 
-//ゲームマップのCSVを読み込む関数
-BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
+//ゲームマップの最下層のCSVを読み込む関数
+BOOL MY_MAP_READ_CSV_NUM_SAIKASO(FILE* fp, const char* path)
 {
+	//最下層
 	if ((fp = fopen(path, "r")) == NULL)	//ファイルを読み込みモード(r)で開く
 	{
 		return FALSE;
@@ -714,20 +718,20 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 
 //ここから正常に読み込めた時の処理
 
-	int result = 0;		//ファイルの最後かチェック
-	int LoopCnt = 0;	//ループカウンタ
-	while (result != EOF)	//End Of File(ファイルの最後)ではないとき繰り返す
+	int result_saikaso = 0;		//ファイルの最後かチェック
+	int LoopCnt_saikaso = 0;	//ループカウンタ
+	while (result_saikaso != EOF)	//End Of File(ファイルの最後)ではないとき繰り返す
 	{
 		//ファイルから数値を一つ読み込み(%d,)、配列に格納する
-		result = fscanf(fp, "%d,", &MapData[LoopCnt / GAME_MAP_YOKO][LoopCnt % GAME_MAP_YOKO]);
+		result_saikaso = fscanf(fp, "%d,", &MapData_saikaso[LoopCnt_saikaso / GAME_MAP_YOKO][LoopCnt_saikaso % GAME_MAP_YOKO]);
 
-		MapData_Init[LoopCnt / GAME_MAP_YOKO][LoopCnt % GAME_MAP_YOKO] = MapData[LoopCnt / GAME_MAP_YOKO][LoopCnt % GAME_MAP_YOKO];	//値をコピー
+		MapData_saikaso_Init[LoopCnt_saikaso / GAME_MAP_YOKO][LoopCnt_saikaso % GAME_MAP_YOKO] = MapData_saikaso[LoopCnt_saikaso / GAME_MAP_YOKO][LoopCnt_saikaso % GAME_MAP_YOKO];	//値をコピー
 
-		LoopCnt++;
+		LoopCnt_saikaso++;
 	}
 	fclose(fp);//ファイルを閉じる
 
-	int cnt;
+	//int cnt;
 
 	////マップを当たり判定の領域に変換
 	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
@@ -736,7 +740,7 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 	//	{
 	//		for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
 	//		{
-	//			if (MapData[tate][yoko] == MapNotDownKind[cnt])
+	//			if (MapData_saikaso[tate][yoko] == MapNotDownKind[cnt])
 	//			{
 	//				rectMap_DownNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
 	//				rectMap_DownNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
@@ -750,7 +754,7 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 
 	//		for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
 	//		{
-	//			if (MapData[tate][yoko] == MapOKDownKind[cnt])
+	//			if (MapData_saikaso[tate][yoko] == MapOKDownKind[cnt])
 	//			{
 	//				rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
 	//				rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
@@ -763,7 +767,7 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 
 	//		for (cnt = 0; cnt < GAME_MAP_NOTLEFT_KIND; cnt++)			//左に行けないマップ
 	//		{
-	//			if (MapData[tate][yoko] == MapNotLeftKind[cnt])
+	//			if (MapData_saikaso[tate][yoko] == MapNotLeftKind[cnt])
 	//			{
 	//				rectMap_LeftNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
 	//				rectMap_LeftNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
@@ -776,7 +780,7 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 	//		}
 	//		for (cnt = 0; cnt < GAME_MAP_NOTRIGHT_KIND; cnt++)			//右に行けないマップ
 	//		{
-	//			if (MapData[tate][yoko] == MapNotRightKind[cnt])
+	//			if (MapData_saikaso[tate][yoko] == MapNotRightKind[cnt])
 	//			{
 	//				rectMap_RightNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
 	//				rectMap_RightNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
@@ -789,7 +793,215 @@ BOOL MY_MAP_READ_CSV_NUM(FILE* fp, const char* path)
 	//		}
 	//		for (cnt = 0; cnt < GAME_MAP_NOTUP_KIND; cnt++)			//上に行けないマップ
 	//		{
-	//			if (MapData[tate][yoko] == MapNotUpKind[cnt])
+	//			if (MapData_saikaso[tate][yoko] == MapNotUpKind[cnt])
+	//			{
+	//				rectMap_UpNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_UpNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_UpNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_UpNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_UpNG_First[tate][yoko] = rectMap_UpNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+
+	//	}
+	//}
+
+	return TRUE;
+}
+
+//ゲームマップの木のCSVを読み込む関数
+BOOL MY_MAP_READ_CSV_NUM_KI(FILE* fp, const char* path)
+{
+	//木
+	if ((fp = fopen(path, "r")) == NULL)	//ファイルを読み込みモード(r)で開く
+	{
+		return FALSE;
+	}//異常終了
+
+//ここから正常に読み込めた時の処理
+
+	int result_ki = 0;		//ファイルの最後かチェック
+	int LoopCnt_ki = 0;	//ループカウンタ
+	while (result_ki != EOF)	//End Of File(ファイルの最後)ではないとき繰り返す
+	{
+		//ファイルから数値を一つ読み込み(%d,)、配列に格納する
+		result_ki = fscanf(fp, "%d,", &MapData_ki[LoopCnt_ki / GAME_MAP_YOKO][LoopCnt_ki % GAME_MAP_YOKO]);
+
+		MapData_ki_Init[LoopCnt_ki / GAME_MAP_YOKO][LoopCnt_ki % GAME_MAP_YOKO] = MapData_ki[LoopCnt_ki / GAME_MAP_YOKO][LoopCnt_ki % GAME_MAP_YOKO];	//値をコピー
+
+		LoopCnt_ki++;
+	}
+	fclose(fp);//ファイルを閉じる
+
+	//int cnt;
+
+	////マップを当たり判定の領域に変換
+	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
+	//	{
+	//		for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotDownKind[cnt])
+	//			{
+	//				rectMap_DownNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_DownNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_DownNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_DownNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_DownNG_First[tate][yoko] = rectMap_DownNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+
+	//		for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapOKDownKind[cnt])
+	//			{
+	//				rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_DownOK[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_DownOK[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_DownOK_First[tate][yoko] = rectMap_DownOK[tate][yoko];//初期位置を設定
+	//			}
+	//		}
+
+	//		for (cnt = 0; cnt < GAME_MAP_NOTLEFT_KIND; cnt++)			//左に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotLeftKind[cnt])
+	//			{
+	//				rectMap_LeftNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_LeftNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_LeftNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_LeftNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_LeftNG_First[tate][yoko] = rectMap_LeftNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+	//		for (cnt = 0; cnt < GAME_MAP_NOTRIGHT_KIND; cnt++)			//右に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotRightKind[cnt])
+	//			{
+	//				rectMap_RightNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_RightNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_RightNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_RightNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_RightNG_First[tate][yoko] = rectMap_RightNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+	//		for (cnt = 0; cnt < GAME_MAP_NOTUP_KIND; cnt++)			//上に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotUpKind[cnt])
+	//			{
+	//				rectMap_UpNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_UpNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_UpNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_UpNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_UpNG_First[tate][yoko] = rectMap_UpNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+
+	//	}
+	//}
+
+	return TRUE;
+}
+
+//ゲームマップの壁のCSVを読み込む関数
+BOOL MY_MAP_READ_CSV_NUM_KABE(FILE* fp, const char* path)
+{
+	//壁
+	if ((fp = fopen(path, "r")) == NULL)	//ファイルを読み込みモード(r)で開く
+	{
+		return FALSE;
+	}//異常終了
+
+//ここから正常に読み込めた時の処理
+
+	int result_kabe = 0;		//ファイルの最後かチェック
+	int LoopCnt_kabe = 0;	//ループカウンタ
+	while (result_kabe != EOF)	//End Of File(ファイルの最後)ではないとき繰り返す
+	{
+		//ファイルから数値を一つ読み込み(%d,)、配列に格納する
+		result_kabe = fscanf(fp, "%d,", &MapData_kabe[LoopCnt_kabe / GAME_MAP_YOKO][LoopCnt_kabe % GAME_MAP_YOKO]);
+
+		MapData_kabe_Init[LoopCnt_kabe / GAME_MAP_YOKO][LoopCnt_kabe % GAME_MAP_YOKO] = MapData_kabe[LoopCnt_kabe / GAME_MAP_YOKO][LoopCnt_kabe % GAME_MAP_YOKO];	//値をコピー
+
+		LoopCnt_kabe++;
+	}
+	fclose(fp);//ファイルを閉じる
+
+	//int cnt;
+
+	////マップを当たり判定の領域に変換
+	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
+	//	{
+	//		for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotDownKind[cnt])
+	//			{
+	//				rectMap_DownNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_DownNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_DownNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_DownNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_DownNG_First[tate][yoko] = rectMap_DownNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+
+	//		for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapOKDownKind[cnt])
+	//			{
+	//				rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_DownOK[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_DownOK[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_DownOK_First[tate][yoko] = rectMap_DownOK[tate][yoko];//初期位置を設定
+	//			}
+	//		}
+
+	//		for (cnt = 0; cnt < GAME_MAP_NOTLEFT_KIND; cnt++)			//左に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotLeftKind[cnt])
+	//			{
+	//				rectMap_LeftNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_LeftNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_LeftNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_LeftNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_LeftNG_First[tate][yoko] = rectMap_LeftNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+	//		for (cnt = 0; cnt < GAME_MAP_NOTRIGHT_KIND; cnt++)			//右に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotRightKind[cnt])
+	//			{
+	//				rectMap_RightNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+	//				rectMap_RightNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+	//				rectMap_RightNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+	//				rectMap_RightNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+
+	//				rectMap_RightNG_First[tate][yoko] = rectMap_RightNG[tate][yoko];	//初期位置を設定
+
+	//			}
+	//		}
+	//		for (cnt = 0; cnt < GAME_MAP_NOTUP_KIND; cnt++)			//上に行けないマップ
+	//		{
+	//			if (MapData_saikaso[tate][yoko] == MapNotUpKind[cnt])
 	//			{
 	//				rectMap_UpNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
 	//				rectMap_UpNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
