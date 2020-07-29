@@ -55,15 +55,13 @@
 
 #define FNT_TANU_NAME TEXT("たぬき油性マジック")
 
-#define GAME_MAP_NOTDOWN_KIND	1		//下に行けないマップの種類
-#define GAME_MAP_OKDOWN_KIND	4		//下に行けるマップの種類
+#define GAME_MAP_NOTDOWN_KIND	12		//下に行けないマップの種類
+#define GAME_MAP_OKDOWN_KIND	16		//下に行けるマップの種類
 
-#define GAME_MAP_NOTUP_KIND		1		//上に行けないマップの種類
+#define GAME_MAP_NOTUP_KIND		36		//上に行けないマップの種類
 
-#define GAME_MAP_NOTLEFT_KIND	1	//左に行けないマップの種類
-#define GAME_MAP_NOTRIGHT_KIND	1	//右に行けないマップの種類
-
-#define GAME_MAP_NO_KIND		1
+#define GAME_MAP_NOTLEFT_KIND	6	//左に行けないマップの種類
+#define GAME_MAP_NOTRIGHT_KIND	6	//右に行けないマップの種類
 
 #define GAME_MAP_GOAL_KIND		1	//ゴールの種類
 
@@ -258,14 +256,22 @@ int MapData_kabe_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
 
 FILE* fp_map_csv;		//ファイルの管理番号（ポインタ≒ハンドル）
 
-int MapNotDownKind[GAME_MAP_NOTDOWN_KIND] = {};	//下に行けないマップの番号
-int MapOKDownKind[GAME_MAP_OKDOWN_KIND] = {594,595,681,682};
+int MapNotDownKind[GAME_MAP_NOTDOWN_KIND] = {79,80,81,82,83,84,
+											 165,166,167,168,169,170};	//下に行けないマップの番号
 
-int MapNoKind[GAME_MAP_NO_KIND] = {};
+int MapOKDownKind[GAME_MAP_OKDOWN_KIND] = {159,160,161,162,245,
+										   246,247,248,331,332,
+										   333,334,417,418,419,420}; //下に行けるマップの番号
 
-int MapNotUpKind[GAME_MAP_NOTUP_KIND] = {};
+int MapNotUpKind[GAME_MAP_NOTUP_KIND] = {932,933,934,935,936,937,
+										 1018,1019,1020,1021,1022,1023,
+										 1104,1105,1106,1107,1108,1109,
+										 1190,1191,1192,1193,1194,1195,
+										 1276,1277,1278,1279,1280,1281,
+										 1362,1363,1364,1365,1366,1367};	//上に行けないマップの番号
 
 int MapNotLeftKind[GAME_MAP_NOTLEFT_KIND] = {};		//左に行けないマップの番号
+
 int MapNotRightKind[GAME_MAP_NOTRIGHT_KIND] = {};	//右に行けないマップの番号
 
 int MapGoalKind[GAME_MAP_GOAL_KIND] = {};//ゴールのマップの番号
