@@ -313,6 +313,11 @@ RECT rectMap_RightNG_First[GAME_MAP_TATE][GAME_MAP_YOKO];
 RECT rectMap_UpNG[GAME_MAP_TATE][GAME_MAP_YOKO];
 RECT rectMap_UpNG_First[GAME_MAP_TATE][GAME_MAP_YOKO];
 
+VOID MY_SET_PLAYER_ATARI(PLAYER*);
+
+BOOL MY_CHECK_RECT_ATARI(RECT, RECT);
+BOOL MY_CHECK_RECT_ATARI_CHARA_MAP(RECT, RECT[GAME_MAP_TATE][GAME_MAP_YOKO]);//マップとの当たり判定をする関数
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	ChangeWindowMode(GAME_WINDOW_MODECHANGE);
@@ -368,11 +373,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 		case(int)GAME_SCENE_TITLE:
 
-			/*if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
 			}
-			PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);*/
+
+			PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
 			
 			DrawGraph(title.X, title.Y, title.Handle, TRUE);
 			//DrawExtendGraph(250, 250, 250 + 160, 250 + 120, panda.Handle, TRUE);
@@ -393,9 +399,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_IDOU;
 			}
 
-			StopSoundMem(MUSIC_TITLE.Handle);
-			PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP);
-
 			break;
 
 		case(int)GAME_SCENE_IDOU:
@@ -410,8 +413,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
 
-			/*StopSoundMem(MUSIC_TITLE.Handle);
-			PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP);*/
+			if (CheckSoundMem(MUSIC_TITLE.Handle) == 1)
+			{
+				StopMusicMem(MUSIC_TITLE.Handle);
+			}
+			PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP);
 
 			MY_PLAY_MAP_DRAW();			//マップを描画
 			MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
@@ -432,7 +438,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
 			}
-			PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
 
 			break;
 
@@ -449,7 +454,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
 			}
-			PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
 
 			break;
 
@@ -577,11 +581,14 @@ VOID MY_PLAY_PLAYER_DRAW(VOID)
 
 	//普通に描画
 	DrawGraph(
-		Myplayer.X+100,
-		Myplayer.Y+150,
+		Myplayer.X,
+		Myplayer.Y,
 		Myplayer.Handle[Myplayer.NowHandleNum],
 	TRUE
 	);
+
+	DrawFormatString(0, 60, GetColor(255, 255, 255), "プレイヤーX位置: %d", Myplayer.X);
+	DrawFormatString(0, 80, GetColor(255, 255, 255), "プレイヤーY位置: %d", Myplayer.Y);
 
 	/*DrawBox(
 		Myplayer.atariRect.left,
@@ -949,7 +956,7 @@ BOOL MY_MAP_READ_CSV_NUM_KABE(FILE* fp, const char* path)
 	{
 		for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
 		{
-			for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
+			for (cnt = 0; cnt <= GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
 			{
 				if (MapData_kabe[tate][yoko] == MapNotDownKind[cnt])
 				{
@@ -960,19 +967,6 @@ BOOL MY_MAP_READ_CSV_NUM_KABE(FILE* fp, const char* path)
 
 					rectMap_DownNG_First[tate][yoko] = rectMap_DownNG[tate][yoko];	//初期位置を設定
 
-				}
-			}
-
-			for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
-			{
-				if (MapData_kabe[tate][yoko] == MapOKDownKind[cnt])
-				{
-					rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-					rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-					rectMap_DownOK[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-					rectMap_DownOK[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
-
-					rectMap_DownOK_First[tate][yoko] = rectMap_DownOK[tate][yoko];//初期位置を設定
 				}
 			}
 
@@ -1062,14 +1056,14 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		//左方向に、まだ動ける
 		Myplayer.CanMoveLeft = TRUE;
 
-		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
-		//Myplayer.atariRect.left -= 12;	//少し、当たり判定の領域を左にずらす
-		//Myplayer.atariRect.right -= 12;	//少し、当たり判定の領域を左にずらす
+		MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		Myplayer.atariRect.left -= 12;	//少し、当たり判定の領域を左にずらす
+		Myplayer.atariRect.right -= 12;	//少し、当たり判定の領域を左にずらす
 
-		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_LeftNG) == TRUE)//左に行けないモノと当たったとき
-		//{
-		//	Myplayer.CanMoveLeft = FALSE;//左に行けない
-		//}
+		if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_LeftNG) == TRUE)//左に行けないモノと当たったとき
+		{
+			Myplayer.CanMoveLeft = FALSE;//左に行けない
+		}
 
 		if (Myplayer.CanMoveLeft == TRUE)	//左に移動できるとき
 		{
@@ -1114,14 +1108,12 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		//右方向に、まだ動ける
 		Myplayer.CanMoveRight = TRUE;
 
-		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
-		//Myplayer.atariRect.left += 12;	//少し、プレイヤーの当たり判定の領域を右にずらす
-		//Myplayer.atariRect.right += 12;	//少し、プレイヤーの当たり判定の領域を右にずらす
+		MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
 
-		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_RightNG) == TRUE)//右に行けないモノと当たったとき
-		//{
-		//	Myplayer.CanMoveRight = FALSE;//右に行けない
-		//}
+		if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_RightNG) == TRUE)//右に行けないモノと当たったとき
+		{
+			Myplayer.CanMoveRight = FALSE;//右に行けない
+		}
 
 		if (Myplayer.CanMoveRight == TRUE)	//右に移動できるとき
 		{
@@ -1165,14 +1157,12 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		//上方向に、まだ動ける
 		Myplayer.CanMoveUp = TRUE;
 
-		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
-		//Myplayer.atariRect.left -= 12;	//少し、当たり判定の領域を上にずらす
-		//Myplayer.atariRect.right -= 12;	//少し、当たり判定の領域を上にずらす
+		MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
 
-		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_LeftNG) == TRUE)//上に行けないモノと当たったとき
-		//{
-		//	Myplayer.CanMoveLeft = FALSE;//上に行けない
-		//}
+		if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_UpNG) == TRUE)//上に行けないモノと当たったとき
+		{
+			Myplayer.CanMoveUp = FALSE;//上に行けない
+		}
 
 		if (Myplayer.CanMoveUp == TRUE)	//上に移動できるとき
 		{
@@ -1217,14 +1207,14 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		//下方向に、まだ動ける
 		Myplayer.CanMoveDown = TRUE;
 
-		//MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
-		//Myplayer.atariRect.left += 12;	//少し、プレイヤーの当たり判定の領域を下にずらす
-		//Myplayer.atariRect.right += 12;	//少し、プレイヤーの当たり判定の領域を下にずらす
+		MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		Myplayer.atariRect.top += 12;	//少し、プレイヤーの当たり判定の領域を下にずらす
+		Myplayer.atariRect.bottom += 12;	//少し、プレイヤーの当たり判定の領域を下にずらす
 
-		//if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_DownNG) == TRUE)//下に行けないモノと当たったとき
-		//{
-		//	Myplayer.CanMoveDown = FALSE;//下に行けない
-		//}
+		if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_DownNG) == TRUE)//下に行けないモノと当たったとき
+		{
+			Myplayer.CanMoveDown = FALSE;//下に行けない
+		}
 
 		if (Myplayer.CanMoveDown == TRUE)	//下に移動できるとき
 		{
@@ -1242,44 +1232,6 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 			}
 		}
 	}
-
-	////マップの左側にいるときは、プレイヤーを動かす
-	//if (Myplayer.MoveDist > 0 &&
-	//	Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 7)	//プレイヤーの動いた距離が一定以上あれば（開始地点）
-	//{
-	//	MapImage.charaStopFlag = FALSE;					//マップを止めて、プレイヤーを動かす
-	//}
-
-	////マップ真ん中らへんにいるときは、マップを動かす
-	//if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 7 &&
-	//	Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 145)	//プレイヤーの動いた距離が一定以上あれば(開始地点)
-	//{
-	//	MapImage.charaStopFlag = TRUE;					//マップを動かす
-
-	//	if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 70 &&
-	//		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 96)
-	//	{
-	//		Myplayer.Speed = 5;
-	//	}
-	//	if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 96 &&
-	//		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 110)
-	//	{
-	//		Myplayer.Speed = 2;
-	//	}
-	//	if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 110 &&
-	//		Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * 145)
-	//	{
-	//		Myplayer.Speed = 3;
-	//	}
-	//}
-	//マップの右側にいるときは、プレイヤーを動かす
-	//if (Myplayer.MoveDist > GAME_MAP_YOKO_SIZE * 145 &&
-	//	Myplayer.MoveDist <= GAME_MAP_YOKO_SIZE * GAME_MAP_YOKO)	//プレイヤーの動いた距離が一定以上あれば(終了地点)
-	//{
-	//	MapImage.charaStopFlag = FALSE;					//マップを止めて、プレイヤーを動かす
-	//}
-
-
 
 	if (IsKeyDown == FALSE)
 	{
@@ -1354,34 +1306,56 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 				}
 			}
 		}
-	
-
-	//マップの当たり判定もスクロールさせる
-	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
-	//{
-	//	for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
-	//	{
-	//		rectMap_DownNG[tate][yoko].left = rectMap_DownNG_First[tate][yoko].left - ScrollCntYoko;
-	//		rectMap_DownNG[tate][yoko].right = rectMap_DownNG_First[tate][yoko].right - ScrollCntYoko;
-
-	//		rectMap_DownOK[tate][yoko].left = rectMap_DownOK_First[tate][yoko].left - ScrollCntYoko;
-	//		rectMap_DownOK[tate][yoko].right = rectMap_DownOK_First[tate][yoko].right - ScrollCntYoko;
-
-	//		rectMap_LeftNG[tate][yoko].left = rectMap_LeftNG_First[tate][yoko].left - ScrollCntYoko;
-	//		rectMap_LeftNG[tate][yoko].right = rectMap_LeftNG_First[tate][yoko].right - ScrollCntYoko;
-
-	//		rectMap_RightNG[tate][yoko].left = rectMap_RightNG_First[tate][yoko].left - ScrollCntYoko;
-	//		rectMap_RightNG[tate][yoko].right = rectMap_RightNG_First[tate][yoko].right - ScrollCntYoko;
-
-	//		rectMap_UpNG[tate][yoko].left = rectMap_UpNG_First[tate][yoko].left - ScrollCntYoko;
-	//		rectMap_UpNG[tate][yoko].right = rectMap_UpNG_First[tate][yoko].right - ScrollCntYoko;
-
-	//		rectMap_Coin[tate][yoko].left = rectMap_Coin_First[tate][yoko].left - ScrollCntYoko;
-	//		rectMap_Coin[tate][yoko].right = rectMap_Coin_First[tate][yoko].right - ScrollCntYoko;
-	//	}
-	//}
 
 	return;
+}
+
+//プレイヤーの当たり判定の領域を設定する関数
+VOID MY_SET_PLAYER_ATARI(PLAYER* p)
+{
+	//当たり判定の領域の設定
+	p->atariRect.left = p->X + p->atariX + 2;						//現在のX位置 ＋ 当たり判定のX位置
+	p->atariRect.top = p->Y + p->atariY + 2;						//現在のY位置 ＋ 当たり判定のY位置
+	p->atariRect.right = p->X + p->atariX + p->atariWidth - 2;		//現在のX位置 ＋ 当たり判定のX位置 ＋ 当たり判定の幅
+	p->atariRect.bottom = p->Y + p->atariY + p->atariHeight - 2;	//現在のY位置 ＋ 当たり判定のY位置 ＋ 当たり判定の高さ
+
+	return;
+}
+
+//領域の当たり判定をする関数
+BOOL MY_CHECK_RECT_ATARI(RECT a, RECT b)
+{
+	if (a.left < b.right &&
+		a.top < b.bottom &&
+		a.right > b.left &&
+		a.bottom > b.top
+		)
+	{
+		return TRUE;	//当たっている
+	}
+
+	return FALSE;		//当たっていない
+}
+
+//キャラクターとマップの当たり判定をする関数
+//引　数　：RECT	：当たり判定をする領域(キャラクター)
+//引　数　：RECT	：当たり判定をする領域(マップ)
+//戻り値　：当たっている：TRUE / 当たっていない / FALSE
+BOOL MY_CHECK_RECT_ATARI_CHARA_MAP(RECT chara, RECT map[GAME_MAP_TATE][GAME_MAP_YOKO])
+{
+	for (int tate = 0; tate < GAME_MAP_TATE; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
+		{
+			//キャラクターの当たっている場所を取得
+			if (MY_CHECK_RECT_ATARI(chara, map[tate][yoko]) == TRUE)
+			{
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;		//当たっていない
 }
 
 // ########## 音を読み込む設定をする関数 ##########
