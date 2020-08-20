@@ -254,6 +254,8 @@ VOID FPS_UPDATE(VOID);
 VOID FPS_DRAW(VOID);
 VOID FPS_WAIT(VOID);
 
+VOID MY_PLAYER_INITPOSI(VOID);
+
 VOID MY_PLAY_PLAYER_DRAW(VOID);		//プレイヤーを表示する関数
 
 VOID MY_PLAY_PLAYER_OPERATION(VOID);	//プレイヤーを操作する関数
@@ -377,8 +379,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
 			}
-
-			PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
+			else if(CheckSoundMem(MUSIC_TITLE.Handle)==0)
+			{
+				PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
+			}
 			
 			DrawGraph(title.X, title.Y, title.Handle, TRUE);
 			//DrawExtendGraph(250, 250, 250 + 160, 250 + 120, panda.Handle, TRUE);
@@ -396,12 +400,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
+				MY_PLAYER_INITPOSI();
 				GameSceneNow = (int)GAME_SCENE_IDOU;
 			}
 
 			break;
 
 		case(int)GAME_SCENE_IDOU:
+
+			if (CheckSoundMem(MUSIC_TITLE.Handle) == 1)
+			{
+				StopMusicMem(MUSIC_TITLE.Handle);
+			}
+			else if (CheckSoundMem(MUSIC_FIELD.Handle) == 0)
+			{
+				PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP, FALSE);
+			}
 
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
@@ -412,12 +426,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
-
-			if (CheckSoundMem(MUSIC_TITLE.Handle) == 1)
-			{
-				StopMusicMem(MUSIC_TITLE.Handle);
-			}
-			PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP);
 
 			MY_PLAY_MAP_DRAW();			//マップを描画
 			MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
@@ -567,6 +575,13 @@ BOOL GAZOU_LOAD(GAZOU* g, int x, int y, const char* path)
 
 	return TRUE;
 }
+
+VOID MY_PLAYER_INITPOSI(VOID)
+{
+	Myplayer.X = 150;
+	Myplayer.Y = 150;
+}
+
 //プレイヤーを表示する関数
 VOID MY_PLAY_PLAYER_DRAW(VOID)
 {
