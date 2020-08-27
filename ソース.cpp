@@ -58,13 +58,13 @@
 
 #define FNT_TANU_NAME TEXT("たぬき油性マジック")
 
-#define GAME_MAP_NOTDOWN_KIND	12		//下に行けないマップの種類
+#define GAME_MAP_NOTDOWN_KIND	50		//下に行けないマップの種類
 #define GAME_MAP_OKDOWN_KIND	16		//下に行けるマップの種類
 
-#define GAME_MAP_NOTUP_KIND		36		//上に行けないマップの種類
+#define GAME_MAP_NOTUP_KIND		60		//上に行けないマップの種類
 
-#define GAME_MAP_NOTLEFT_KIND	6	//左に行けないマップの種類
-#define GAME_MAP_NOTRIGHT_KIND	6	//右に行けないマップの種類
+#define GAME_MAP_NOTLEFT_KIND	30	//左に行けないマップの種類
+#define GAME_MAP_NOTRIGHT_KIND	30	//右に行けないマップの種類
 
 #define GAME_MAP_IDOU_KIND		1	//マップ移動の種類
 
@@ -73,6 +73,7 @@ enum GAME_SCENE
 	GAME_SCENE_TITLE,
 	GAME_SCENE_SOUSA,
 	GAME_SCENE_IDOU,
+	GAME_SCENE_SENTOU,
 	GAME_SCENE_OVER,
 	GAME_SCENE_CLEAR
 };
@@ -189,6 +190,7 @@ BOOL IsWM_CREATE = FALSE;	//WM_CREATEが正常に動作したか判定する
 
 GAZOU title;
 GAZOU sousa;
+GAZOU sentou;
 GAZOU over;
 GAZOU clear;
 GAZOU map;
@@ -276,26 +278,38 @@ int MapData_kabe_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
 FILE* fp_map_csv;		//ファイルの管理番号（ポインタ≒ハンドル）
 
 int MapNotDownKind[GAME_MAP_NOTDOWN_KIND] = {79,80,81,82,83,84,
-											 165,166,167,168,169,170};	//下に行けないマップの番号
+											 165,166,167,168,169,170,
+											 670,671,756,757,842,843,
+											 2296,2297,2298,2299,
+											 2645,2646,2647,2648,2649,2650};	//下に行けないマップの番号
 
 int MapOKDownKind[GAME_MAP_OKDOWN_KIND] = {159,160,161,162,245,
 										   246,247,248,331,332,
 										   333,334,417,418,419,420}; //下に行けるマップの番号
 
-int MapNotUpKind[GAME_MAP_NOTUP_KIND] = {932,933,934,935,936,937,
+int MapNotUpKind[GAME_MAP_NOTUP_KIND] = { 670,671,756,757,842,843,
+										  932,933,934,935,936,937,
 										 1018,1019,1020,1021,1022,1023,
 										 1104,1105,1106,1107,1108,1109,
 										 1190,1191,1192,1193,1194,1195,
 										 1276,1277,1278,1279,1280,1281,
-										 1362,1363,1364,1365,1366,1367};	//上に行けないマップの番号
+										 1362,1363,1364,1365,1366,1367,
+										 2296,2297,2298,2299,
+										 2645,2646,2647,2648,2649,2650 };	//上に行けないマップの番号
 
-int MapNotLeftKind[GAME_MAP_NOTLEFT_KIND] = {764,765,
-											 850,851,
-											 936,937};		//左に行けないマップの番号
+int MapNotLeftKind[GAME_MAP_NOTLEFT_KIND] = { 671,
+											  764,765,
+											  850,851,
+											  936,937,
+											  2298,2299,
+											  2649,2650 };		//左に行けないマップの番号
 
-int MapNotRightKind[GAME_MAP_NOTRIGHT_KIND] = {761,762,
-											   846,847,
-											   932,933};	//右に行けないマップの番号
+int MapNotRightKind[GAME_MAP_NOTRIGHT_KIND] = { 670,
+												761,762,
+											    846,847,
+											    932,933,
+												2296,2297,
+												2645,2646 };	//右に行けないマップの番号
 
 int MapGoalKind[GAME_MAP_IDOU_KIND] = {};//ゴールのマップの番号
 
@@ -375,14 +389,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 		case(int)GAME_SCENE_TITLE:
 
-			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			/*if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
 			}
-			else if(CheckSoundMem(MUSIC_TITLE.Handle)==0)
+			if(CheckSoundMem(MUSIC_TITLE.Handle)==0)
 			{
 				PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
-			}
+			}*/
 			
 			DrawGraph(title.X, title.Y, title.Handle, TRUE);
 			//DrawExtendGraph(250, 250, 250 + 160, 250 + 120, panda.Handle, TRUE);
@@ -408,14 +422,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		case(int)GAME_SCENE_IDOU:
 
-			if (CheckSoundMem(MUSIC_TITLE.Handle) == 1)
+			/*if (CheckSoundMem(MUSIC_FIELD.Handle) == 0)
 			{
-				StopMusicMem(MUSIC_TITLE.Handle);
-			}
-			else if (CheckSoundMem(MUSIC_FIELD.Handle) == 0)
-			{
-				PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP, FALSE);
-			}
+				if (CheckSoundMem(MUSIC_TITLE.Handle) == 1)
+				{
+					StopMusicMem(MUSIC_TITLE.Handle);
+				}
+				PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP);
+			}*/
 
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
@@ -433,6 +447,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			break;
 
+		case(int)GAME_SCENE_SENTOU:
+
+			break;
+
 		case(int)GAME_SCENE_OVER:
 
 			DrawGraph(over.X, over.Y, over.Handle, TRUE);
@@ -442,10 +460,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_TITLE;
 			}
 
-			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			/*if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
-			}
+			}*/
 
 			break;
 
@@ -458,10 +476,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_TITLE;
 			}
 
-			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
-			{
-				StopMusicMem(MUSIC_FIELD.Handle);
-			}
+			//if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			//{
+			//	StopMusicMem(MUSIC_FIELD.Handle);
+			//}
 
 			break;
 
@@ -860,82 +878,82 @@ BOOL MY_MAP_READ_CSV_NUM_KI(FILE* fp, const char* path)
 	}
 	fclose(fp);//ファイルを閉じる
 
-	//int cnt;
+	int cnt;
 
-	////マップを当たり判定の領域に変換
-	//for (int tate = 0; tate < GAME_MAP_TATE; tate++)
-	//{
-	//	for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
-	//	{
-	//		for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
-	//		{
-	//			if (MapData_saikaso[tate][yoko] == MapNotDownKind[cnt])
-	//			{
-	//				rectMap_DownNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-	//				rectMap_DownNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-	//				rectMap_DownNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-	//				rectMap_DownNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+	//マップを当たり判定の領域に変換
+	for (int tate = 0; tate < GAME_MAP_TATE; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO; yoko++)
+		{
+			for (cnt = 0; cnt < GAME_MAP_NOTDOWN_KIND; cnt++)	//下に行けないマップ
+			{
+				if (MapData_ki[tate][yoko] == MapNotDownKind[cnt])
+				{
+					rectMap_DownNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+					rectMap_DownNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+					rectMap_DownNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+					rectMap_DownNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-	//				rectMap_DownNG_First[tate][yoko] = rectMap_DownNG[tate][yoko];	//初期位置を設定
+					rectMap_DownNG_First[tate][yoko] = rectMap_DownNG[tate][yoko];	//初期位置を設定
 
-	//			}
-	//		}
+				}
+			}
 
-	//		for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
-	//		{
-	//			if (MapData_saikaso[tate][yoko] == MapOKDownKind[cnt])
-	//			{
-	//				rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-	//				rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-	//				rectMap_DownOK[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-	//				rectMap_DownOK[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+			for (cnt = 0; cnt < GAME_MAP_OKDOWN_KIND; cnt++)//下に行けるマップ
+			{
+				if (MapData_ki[tate][yoko] == MapOKDownKind[cnt])
+				{
+					rectMap_DownOK[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+					rectMap_DownOK[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+					rectMap_DownOK[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+					rectMap_DownOK[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-	//				rectMap_DownOK_First[tate][yoko] = rectMap_DownOK[tate][yoko];//初期位置を設定
-	//			}
-	//		}
+					rectMap_DownOK_First[tate][yoko] = rectMap_DownOK[tate][yoko];//初期位置を設定
+				}
+			}
 
-	//		for (cnt = 0; cnt < GAME_MAP_NOTLEFT_KIND; cnt++)			//左に行けないマップ
-	//		{
-	//			if (MapData_saikaso[tate][yoko] == MapNotLeftKind[cnt])
-	//			{
-	//				rectMap_LeftNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-	//				rectMap_LeftNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-	//				rectMap_LeftNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-	//				rectMap_LeftNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+			for (cnt = 0; cnt < GAME_MAP_NOTLEFT_KIND; cnt++)			//左に行けないマップ
+			{
+				if (MapData_ki[tate][yoko] == MapNotLeftKind[cnt])
+				{
+					rectMap_LeftNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+					rectMap_LeftNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+					rectMap_LeftNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+					rectMap_LeftNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-	//				rectMap_LeftNG_First[tate][yoko] = rectMap_LeftNG[tate][yoko];	//初期位置を設定
+					rectMap_LeftNG_First[tate][yoko] = rectMap_LeftNG[tate][yoko];	//初期位置を設定
 
-	//			}
-	//		}
-	//		for (cnt = 0; cnt < GAME_MAP_NOTRIGHT_KIND; cnt++)			//右に行けないマップ
-	//		{
-	//			if (MapData_saikaso[tate][yoko] == MapNotRightKind[cnt])
-	//			{
-	//				rectMap_RightNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-	//				rectMap_RightNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-	//				rectMap_RightNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-	//				rectMap_RightNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+				}
+			}
+			for (cnt = 0; cnt < GAME_MAP_NOTRIGHT_KIND; cnt++)			//右に行けないマップ
+			{
+				if (MapData_ki[tate][yoko] == MapNotRightKind[cnt])
+				{
+					rectMap_RightNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+					rectMap_RightNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+					rectMap_RightNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+					rectMap_RightNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-	//				rectMap_RightNG_First[tate][yoko] = rectMap_RightNG[tate][yoko];	//初期位置を設定
+					rectMap_RightNG_First[tate][yoko] = rectMap_RightNG[tate][yoko];	//初期位置を設定
 
-	//			}
-	//		}
-	//		for (cnt = 0; cnt < GAME_MAP_NOTUP_KIND; cnt++)			//上に行けないマップ
-	//		{
-	//			if (MapData_saikaso[tate][yoko] == MapNotUpKind[cnt])
-	//			{
-	//				rectMap_UpNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
-	//				rectMap_UpNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
-	//				rectMap_UpNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
-	//				rectMap_UpNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
+				}
+			}
+			for (cnt = 0; cnt < GAME_MAP_NOTUP_KIND; cnt++)			//上に行けないマップ
+			{
+				if (MapData_ki[tate][yoko] == MapNotUpKind[cnt])
+				{
+					rectMap_UpNG[tate][yoko].left = yoko * GAME_MAP_YOKO_SIZE + 1;
+					rectMap_UpNG[tate][yoko].top = tate * GAME_MAP_TATE_SIZE + 1;
+					rectMap_UpNG[tate][yoko].right = (yoko + 1) * GAME_MAP_YOKO_SIZE - 1;
+					rectMap_UpNG[tate][yoko].bottom = (tate + 1) * GAME_MAP_TATE_SIZE - 1;
 
-	//				rectMap_UpNG_First[tate][yoko] = rectMap_UpNG[tate][yoko];	//初期位置を設定
+					rectMap_UpNG_First[tate][yoko] = rectMap_UpNG[tate][yoko];	//初期位置を設定
 
-	//			}
-	//		}
+				}
+			}
 
-	//	}
-	//}
+		}
+	}
 
 	return TRUE;
 }
@@ -1124,6 +1142,8 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		Myplayer.CanMoveRight = TRUE;
 
 		MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		Myplayer.atariRect.left += 4;	//少し、当たり判定の領域を右にずらす
+		Myplayer.atariRect.right += 4;	//少し、当たり判定の領域を右にずらす
 
 		if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_RightNG) == TRUE)//右に行けないモノと当たったとき
 		{
@@ -1173,6 +1193,8 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 		Myplayer.CanMoveUp = TRUE;
 
 		MY_SET_PLAYER_ATARI(&Myplayer);	//プレイヤーの当たり判定の領域を設定
+		Myplayer.atariRect.top -= 4;	//少し、プレイヤーの当たり判定の領域を上にずらす
+		Myplayer.atariRect.bottom -= 4;	//少し、プレイヤーの当たり判定の領域を上にずらす
 
 		if (MY_CHECK_RECT_ATARI_CHARA_MAP(Myplayer.atariRect, rectMap_UpNG) == TRUE)//上に行けないモノと当たったとき
 		{
