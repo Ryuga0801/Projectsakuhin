@@ -1,5 +1,6 @@
 #include "DxLib.h"
 #include<math.h>
+#include<stdlib.h>
 
 #define GAME_WIDTH 800
 #define GAME_HEIGHT 600
@@ -16,6 +17,20 @@
 #define GAME_CLEAR "gazou\\clear.png"
 #define GAME_OVER  "gazou\\gameover.png"
 #define GAME_SOUSA "gazou\\sousasetumei.png"
+
+#define SENTOU_START "gazou\\textbox1.png"
+#define SENTOU_SENTAKU1 "gazou\\textbox2.png"
+#define SENTOU_SENTAKU2 "gazou\\textbox3.png"
+#define SENTOU_ESCAPE "gazou\\textbox4.png"
+#define SENTOU_NOTESCAPE "gazou\\textbox5.png"
+#define SENTOU_ENEMY_ESCAPE "gazou\\textbox6.png"
+#define SENTOU_MISS "gazou\\miss.png"
+#define ENEMY_ATTACK_COW "gazou\\ushi1.png"
+#define ENEMY_ATTACK_LION1 "gazou\\lion1.png"
+#define ENEMY_ATTACK_LION2 "gazou\\lion2.png"
+#define ENEMY_ATTACK_KIRIN "gazou\\kirin.png"
+#define ENEMY_DOWN "gazou\\enemydown.png"
+#define PLAYER_DOWN "gazou\\playerdown.png"
 
 #define GAME_PLAYER "chara\\chara3.png"
 
@@ -78,6 +93,20 @@ enum GAME_SCENE
 	GAME_SCENE_CLEAR
 };
 
+enum BATTLE_SCENE
+{
+	BATTLE_START,
+	BATTLE_SENTAKU1,
+	BATTLE_SENTAKU2,
+	BATTLE_ENEMY_ATTACK,
+	BATTLE_ENEMY_ESCAPE,
+	BATTLE_ATTACK_HAZURE,
+	BATTLE_PLAYERDOWN,
+	BATTLE_ENEMYDOWN,
+	BATTLE_PLAYERESCAPE,
+	BATTLE_PLAYERNORESCAPE
+};
+
 enum CHARA_IMAGE {
 	CHARA_KIND_1 = 0,
 	CHARA_KIND_2 = 3,
@@ -93,6 +122,7 @@ enum CHARA_IMAGE {
 char AllKeyState[256];
 
 int GameSceneNow = (int)GAME_SCENE_TITLE;
+int BattleSceneNow = (int)BATTLE_START;
 
 int ScrollCntYoko = 0;			//スクロールカウンタ（横）
 
@@ -195,6 +225,20 @@ GAZOU over;
 GAZOU clear;
 GAZOU map;
 
+GAZOU start;
+GAZOU sentaku1;
+GAZOU sentaku2;
+GAZOU escape;
+GAZOU notescape;
+GAZOU enemyescape;
+GAZOU miss;
+GAZOU attackcow;
+GAZOU attacklion1;
+GAZOU attacklion2;
+GAZOU attackkirin;
+GAZOU enemydown;
+GAZOU playerdown;
+
 GAZOU panda;
 GAZOU kirin;
 GAZOU cow;
@@ -243,6 +287,8 @@ BOOL MY_CHARA_LOAD_BUNKATSU(CHARA*, int, int, int, int, int, const char*);
 BOOL MY_INIT_PLAYER(PLAYER*, CHARA, int*, int, int, int);					//プレイヤーを初期化する関数
 
 BOOL MY_MUSIC_LOAD(MUSIC*, const char*);
+
+VOID SENTOU_GAZOU_DRAW(VOID);
 
 VOID ALL_KEYDOWN_UPDATE(VOID);
 
@@ -345,18 +391,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SetDrawScreen(DX_SCREEN_BACK);
 
-	/*if (GAZOU_LOAD(&panda, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&panda, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&kirin, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&cow, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&hamster, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&hari, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&lion, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }*/
+	if (GAZOU_LOAD(&lion, 0, 0, GAME_ENEMY_PANDA) == FALSE) { return -1; }
 
 	if (GAZOU_LOAD(&title, 0, 0, GAME_TITLE) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&sousa, 0, 0, GAME_SOUSA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&over, 0, 0, GAME_OVER) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&clear, 0, 0, GAME_CLEAR) == FALSE) { return -1; }
-	//if (GAZOU_LOAD(&map, 0, 0, GAME_MAP_PNG) == FALSE) { return -1; }
+	
+	if (GAZOU_LOAD(&start, 0, 400, SENTOU_START) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&sentaku1, 0, 400, SENTOU_SENTAKU1) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&sentaku2, 0, 400, SENTOU_SENTAKU2) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&escape, 0, 400, SENTOU_ESCAPE) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&notescape, 0, 400, SENTOU_NOTESCAPE) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&enemyescape, 0, 400, SENTOU_ENEMY_ESCAPE) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&miss, 0, 400, SENTOU_MISS) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&attackcow, 0, 400, ENEMY_ATTACK_COW) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&attacklion1, 0, 400, ENEMY_ATTACK_LION1) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&attacklion2, 0, 400, ENEMY_ATTACK_LION2) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&attackkirin, 0, 400, ENEMY_ATTACK_KIRIN) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&enemydown, 0, 400, ENEMY_DOWN) == FALSE) { return -1; }
+	if (GAZOU_LOAD(&playerdown, 0, 400, PLAYER_DOWN) == FALSE) { return -1; }
 
 	if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_YOKO_SIZE, GAME_MAP_TATE_SIZE, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPを読み込む
 
@@ -441,6 +500,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
 
+			if (AllKeyState[KEY_INPUT_SPACE] == 1)
+			{
+				GameSceneNow = (int)GAME_SCENE_SENTOU;
+			}
+
 			MY_PLAY_MAP_DRAW();			//マップを描画
 			MY_PLAY_PLAYER_DRAW();		//プレイヤーを描画
 			MY_PLAY_PLAYER_OPERATION();	//プレイヤーを操作
@@ -448,6 +512,59 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			break;
 
 		case(int)GAME_SCENE_SENTOU:
+
+			if (AllKeyState[KEY_INPUT_RETURN] == 1)
+			{
+				GameSceneNow = (int)GAME_SCENE_CLEAR;
+			}
+
+			SENTOU_GAZOU_DRAW();
+
+			switch (BattleSceneNow)
+			{
+			case(int)BATTLE_START:
+
+				break;
+
+			case(int)BATTLE_SENTAKU1:
+
+				break;
+
+			case(int)BATTLE_SENTAKU2:
+
+				break;
+
+			case(int)BATTLE_ENEMY_ATTACK:
+
+				break;
+
+			case(int)BATTLE_ENEMY_ESCAPE:
+
+				break;
+
+			case(int)BATTLE_ATTACK_HAZURE:
+
+				break;
+
+			case(int)BATTLE_PLAYERDOWN:
+
+				break;
+
+			case(int)BATTLE_ENEMYDOWN:
+
+				break;
+
+			case(int)BATTLE_PLAYERESCAPE:
+
+				break;
+
+			case(int)BATTLE_PLAYERNORESCAPE:
+
+				break;
+
+			default:
+				break;
+			}
 
 			break;
 
@@ -509,6 +626,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DxLib_End();		//ＤＸライブラリ使用の終了処理
 
 	return 0;
+}
+
+VOID SENTOU_GAZOU_DRAW(VOID)
+{
+	int ran;
+	ran=rand() % 5 + 1;
+
+	if (ran == 1)
+	{
+		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, panda.Handle, TRUE);
+	}
+	else if (ran == 2)
+	{
+		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, kirin.Handle, TRUE);
+	}
+	else if (ran == 3)
+	{
+		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, cow.Handle, TRUE);
+	}
+	else if (ran == 4)
+	{
+		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, hamster.Handle, TRUE);
+	}
+	else if (ran == 5)
+	{
+		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, hari.Handle, TRUE);
+	}
 }
 
 VOID ALL_KEYDOWN_UPDATE(VOID)
