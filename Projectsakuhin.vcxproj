@@ -18,6 +18,9 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ソース.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{DF2B83CC-4A5F-4DC4-A38F-7BD3EB77EC8C}</ProjectGuid>
@@ -152,9 +155,6 @@
       <AdditionalLibraryDirectories>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="ソース.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

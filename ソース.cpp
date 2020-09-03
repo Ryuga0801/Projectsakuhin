@@ -18,6 +18,8 @@
 #define GAME_OVER  "gazou\\gameover.png"
 #define GAME_SOUSA "gazou\\sousasetumei.png"
 
+#define GAME_SENTOU "gazou\\mori.jpg"
+
 #define SENTOU_START "gazou\\textbox1.png"
 #define SENTOU_SENTAKU1 "gazou\\textbox2.png"
 #define SENTOU_SENTAKU2 "gazou\\textbox3.png"
@@ -402,6 +404,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (GAZOU_LOAD(&sousa, 0, 0, GAME_SOUSA) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&over, 0, 0, GAME_OVER) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&clear, 0, 0, GAME_CLEAR) == FALSE) { return -1; }
+
+	if (GAZOU_LOAD(&sentou, 0, 0, GAME_SENTOU) == FALSE) { return -1; }
 	
 	if (GAZOU_LOAD(&start, 0, 400, SENTOU_START) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&sentaku1, 0, 400, SENTOU_SENTAKU1) == FALSE) { return -1; }
@@ -448,17 +452,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 		case(int)GAME_SCENE_TITLE:
 
-			/*if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
 			}
 			if(CheckSoundMem(MUSIC_TITLE.Handle)==0)
 			{
 				PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
-			}*/
+			}
 			
 			DrawGraph(title.X, title.Y, title.Handle, TRUE);
-			//DrawExtendGraph(250, 250, 250 + 160, 250 + 120, panda.Handle, TRUE);
 
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
@@ -481,14 +484,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		case(int)GAME_SCENE_IDOU:
 
-			/*if (CheckSoundMem(MUSIC_FIELD.Handle) == 0)
+			if (CheckSoundMem(MUSIC_FIELD.Handle) == 0)
 			{
 				if (CheckSoundMem(MUSIC_TITLE.Handle) == 1)
 				{
 					StopMusicMem(MUSIC_TITLE.Handle);
 				}
 				PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP);
-			}*/
+			}
 
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
@@ -577,10 +580,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_TITLE;
 			}
 
-			/*if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
 			{
 				StopMusicMem(MUSIC_FIELD.Handle);
-			}*/
+			}
 
 			break;
 
@@ -623,6 +626,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DeleteMusicMem(MUSIC_TITLE.Handle);
 	DeleteMusicMem(MUSIC_FIELD.Handle);
 
+	DeleteGraph(title.Handle);
+	DeleteGraph(sousa.Handle);
+	DeleteGraph(over.Handle);
+	DeleteGraph(clear.Handle);
+
+	DeleteGraph(sentou.Handle);
+
+	DeleteGraph(panda.Handle);
+	DeleteGraph(kirin.Handle);
+	DeleteGraph(cow.Handle);
+	DeleteGraph(hamster.Handle);
+	DeleteGraph(hari.Handle);
+	DeleteGraph(lion.Handle);
+
 	DxLib_End();		//ＤＸライブラリ使用の終了処理
 
 	return 0;
@@ -631,11 +648,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 VOID SENTOU_GAZOU_DRAW(VOID)
 {
 	int ran;
-	ran=rand() % 5 + 1;
+	ran = rand() % 5 + 1;
 
 	if (ran == 1)
 	{
-		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, panda.Handle, TRUE);
+		DrawExtendGraph(270, 200, 430, 320, panda.Handle, TRUE);
 	}
 	else if (ran == 2)
 	{
@@ -649,7 +666,7 @@ VOID SENTOU_GAZOU_DRAW(VOID)
 	{
 		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, hamster.Handle, TRUE);
 	}
-	else if (ran == 5)
+	else
 	{
 		DrawExtendGraph(250, 250, 250 + 160, 250 + 120, hari.Handle, TRUE);
 	}
