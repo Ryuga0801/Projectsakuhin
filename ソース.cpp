@@ -16,23 +16,11 @@
 #define GAME_TITLE "gazou\\title.png"
 #define GAME_CLEAR "gazou\\clear.png"
 #define GAME_OVER  "gazou\\gameover.png"
-#define GAME_SOUSA "gazou\\sousasetumei.png"
+#define GAME_SOUSA "gazou\\sousa.png"
 
 #define GAME_SENTOU "gazou\\mori.jpg"
 
-#define SENTOU_START "gazou\\textbox1.png"
-#define SENTOU_SENTAKU1 "gazou\\textbox2.png"
-#define SENTOU_SENTAKU2 "gazou\\textbox3.png"
-#define SENTOU_ESCAPE "gazou\\textbox4.png"
-#define SENTOU_NOTESCAPE "gazou\\textbox5.png"
-#define SENTOU_ENEMY_ESCAPE "gazou\\textbox6.png"
-#define SENTOU_MISS "gazou\\miss.png"
-#define ENEMY_ATTACK_COW "gazou\\ushi1.png"
-#define ENEMY_ATTACK_LION1 "gazou\\lion1.png"
-#define ENEMY_ATTACK_LION2 "gazou\\lion2.png"
-#define ENEMY_ATTACK_KIRIN "gazou\\kirin.png"
-#define ENEMY_DOWN "gazou\\enemydown.png"
-#define PLAYER_DOWN "gazou\\playerdown.png"
+#define SENTOU_TEXT "gazou\\textbox.png"
 
 #define GAME_PLAYER "chara\\chara3.png"
 
@@ -101,8 +89,7 @@ enum BATTLE_SCENE
 	BATTLE_START,
 	BATTLE_SENTAKU1,
 	BATTLE_SENTAKU2,
-	BATTLE_ENEMY_ATTACK,
-	BATTLE_ENEMY_ESCAPE,
+	BATTLE_ENEMY_TURN,
 	BATTLE_ATTACK_HAZURE,
 	BATTLE_PLAYERDOWN,
 	BATTLE_ENEMYDOWN,
@@ -126,6 +113,8 @@ char AllKeyState[256];
 
 int GameSceneNow = (int)GAME_SCENE_TITLE;
 int BattleSceneNow = (int)BATTLE_START;
+
+int BattleScenebefore;
 
 int ScrollCntYoko = 0;			//ÉXÉNÉçÅ[ÉãÉJÉEÉìÉ^Åiâ°Åj
 
@@ -228,19 +217,7 @@ GAZOU over;
 GAZOU clear;
 GAZOU map;
 
-GAZOU start;
-GAZOU sentaku1;
-GAZOU sentaku2;
-GAZOU escape;
-GAZOU notescape;
-GAZOU enemyescape;
-GAZOU miss;
-GAZOU attackcow;
-GAZOU attacklion1;
-GAZOU attacklion2;
-GAZOU attackkirin;
-GAZOU enemydown;
-GAZOU playerdown;
+GAZOU text;
 
 GAZOU panda;
 GAZOU kirin;
@@ -294,6 +271,16 @@ BOOL MY_INIT_PLAYER(PLAYER*, CHARA, int*, int, int, int);					//ÉvÉåÉCÉÑÅ[Çèâä˙
 BOOL MY_MUSIC_LOAD(MUSIC*, const char*);
 
 VOID SENTOU_GAZOU_DRAW(VOID);
+
+VOID GAME_START(VOID);//êÌì¨âÊñ ÇÃénÇ‹ÇË
+VOID SENTAKU1(VOID);//ÉvÉåÉCÉÑÅ[ÇÃëIëâÊñ ÇªÇÃÇP
+VOID SENTAKU2(VOID);//ÉvÉåÉCÉÑÅ[ÇÃëIëâÊñ ÇªÇÃÇQ
+VOID ATTACKMISS(VOID);//çUåÇÇ™äOÇÍÇΩéûÇÃèàóù
+VOID ENEMY_TURN(VOID);//ìGÇÃçsìÆ
+VOID PLAYERDOWN(VOID);//ÉvÉåÉCÉÑÅ[Ç™ì|Ç≥ÇÍÇΩéûÇÃèàóù
+VOID ENEMYDOWN(VOID);//ÉGÉlÉ~Å[Ç™ì|Ç≥ÇÍÇΩéûÇÃèàóù
+VOID PLAYERESCAPE(VOID);//ÉvÉåÉCÉÑÅ[Ç™ì¶Ç∞ÇÁÇÍÇΩéûÇÃèàóù
+VOID PLAYERNOESCAPE(VOID);//ÉvÉåÉCÉÑÅ[Ç™ì¶Ç∞ÇÁÇÍÇ»Ç©Ç¡ÇΩéûÇÃèàóù
 
 VOID ALL_KEYDOWN_UPDATE(VOID);
 
@@ -390,6 +377,16 @@ BOOL MY_CHECK_RECT_ATARI_CHARA_MAP(RECT, RECT[GAME_MAP_TATE][GAME_MAP_YOKO]);//É
 
 int ran=1;	//êÌì¨âÊñ Ç…ì¸ÇÈÇ∆Ç´ÇÃÉâÉìÉ_ÉÄ
 
+int textX = 120;//êÌì¨âÊñ ÇÃÉeÉLÉXÉgÇÃXç¿ïW
+int textY = 460;//êÌì¨âÊñ ÇÃÉeÉLÉXÉgÇÃYç¿ïW
+
+int missrand;//çUåÇÇ™äOÇÍÇÈÉâÉìÉ_ÉÄä÷êî
+
+int escaperand;//ÉvÉåÉCÉÑÅ[Ç™ì¶Ç∞ÇÁÇÍÇÈÇ©ÇÃÉâÉìÉ_ÉÄä÷êî
+
+int PEC = GetColor(255, 0, 255);
+int TC = GetColor(0, 0, 0);
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	ChangeWindowMode(GAME_WINDOW_MODECHANGE);
@@ -415,20 +412,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (GAZOU_LOAD(&sentou, 0, 0, GAME_SENTOU) == FALSE) { return -1; }
 	
-	if (GAZOU_LOAD(&start, 0, 0, SENTOU_START) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&sentaku1, 0, 0, SENTOU_SENTAKU1) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&sentaku2, 0, 0, SENTOU_SENTAKU2) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&escape, 0, 0, SENTOU_ESCAPE) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&notescape, 0, 0, SENTOU_NOTESCAPE) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&enemyescape, 0, 0, SENTOU_ENEMY_ESCAPE) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&miss, 0, 0, SENTOU_MISS) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&attackcow, 0, 0, ENEMY_ATTACK_COW) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&attacklion1, 0, 0, ENEMY_ATTACK_LION1) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&attacklion2, 0, 0, ENEMY_ATTACK_LION2) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&attackkirin, 0, 0, ENEMY_ATTACK_KIRIN) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&enemydown, 0, 0, ENEMY_DOWN) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&playerdown, 0, 0, PLAYER_DOWN) == FALSE) { return -1; }
-
+	if (GAZOU_LOAD(&text, 0, 0, SENTOU_TEXT) == FALSE) { return -1; }
+	
 	if (MY_MAP_LOAD_BUNKATSU(&MapImage, GAME_MAP_BUN_TATE_CNT * GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_YOKO_CNT, GAME_MAP_BUN_TATE_CNT, GAME_MAP_YOKO_SIZE, GAME_MAP_TATE_SIZE, GAME_MAP_PNG) == FALSE) { MessageBox(NULL, GAME_MAP_PNG, "NotFound", MB_OK); return -1; }	//MAPÇì«Ç›çûÇﬁ
 
 	if (MY_CHARA_LOAD_BUNKATSU(&CharaImage, GAME_CHARA_BUN_YOKO_CNT * GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_BUN_YOKO_CNT, GAME_CHARA_BUN_TATE_CNT, GAME_CHARA_YOKO_SIZE, GAME_CHARA_TATE_SIZE, GAME_PLAYER) == FALSE) { MessageBox(NULL, GAME_PLAYER, "NotFound", MB_OK); return -1; }	//CHARAÇì«Ç›çûÇﬁ
@@ -522,6 +507,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 
 				GameSceneNow = (int)GAME_SCENE_SENTOU;
+				BattleSceneNow = (int)BATTLE_START;
 			}
 
 			//MY_PLAY_MAP_DRAW();			//É}ÉbÉvÇï`âÊ
@@ -533,54 +519,61 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		case(int)GAME_SCENE_SENTOU:
 
-			if (AllKeyState[KEY_INPUT_RETURN] == 1)
-			{
-				GameSceneNow = (int)GAME_SCENE_CLEAR;
-			}
-
-
-
 			SENTOU_GAZOU_DRAW();
 
 			switch (BattleSceneNow)
 			{
 			case(int)BATTLE_START:
 
+				GAME_START();
+
 				break;
 
 			case(int)BATTLE_SENTAKU1:
+
+				SENTAKU1();
 
 				break;
 
 			case(int)BATTLE_SENTAKU2:
 
-				break;
-
-			case(int)BATTLE_ENEMY_ATTACK:
+				SENTAKU2();
 
 				break;
 
-			case(int)BATTLE_ENEMY_ESCAPE:
+			case(int)BATTLE_ENEMY_TURN:
+
+				ENEMY_TURN();
 
 				break;
 
 			case(int)BATTLE_ATTACK_HAZURE:
 
+				ATTACKMISS();
+
 				break;
 
 			case(int)BATTLE_PLAYERDOWN:
+
+				PLAYERDOWN();
 
 				break;
 
 			case(int)BATTLE_ENEMYDOWN:
 
+				ENEMYDOWN();
+
 				break;
 
 			case(int)BATTLE_PLAYERESCAPE:
 
+				PLAYERESCAPE();
+
 				break;
 
 			case(int)BATTLE_PLAYERNORESCAPE:
+
+				PLAYERNOESCAPE();
 
 				break;
 
@@ -652,6 +645,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	DeleteGraph(sentou.Handle);
 
+	DeleteGraph(text.Handle);
+
 	DeleteGraph(panda.Handle);
 	DeleteGraph(kirin.Handle);
 	DeleteGraph(cow.Handle);
@@ -667,7 +662,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 VOID SENTOU_GAZOU_DRAW(VOID)
 {
 	DrawGraph(0, 0, sentou.Handle, TRUE);
-
+	DrawGraph(0, 400, text.Handle, TRUE);
 	if (ran == 1)
 	{
 		DrawExtendGraph(280, 200, 465, 350, panda.Handle, TRUE);
@@ -687,6 +682,224 @@ VOID SENTOU_GAZOU_DRAW(VOID)
 	if(ran==5)
 	{
 		DrawExtendGraph(280, 200, 465, 350, hari.Handle, TRUE);
+	}
+}
+
+VOID GAME_START(VOID)
+{
+	SetFontSize(64);
+	if (ran == 1)
+	{
+		DrawString(textX, textY, "ÉpÉìÉ_Ç™åªÇÍÇΩÅI",PEC);
+	}
+	if (ran == 2)
+	{
+		DrawString(textX, textY, "ÉLÉäÉìÇ™åªÇÍÇΩÅI", PEC);
+	}
+	if (ran == 3)
+	{
+		DrawString(textX, textY, "ÉEÉVÇ™åªÇÍÇΩÅI", PEC);
+	}
+	if (ran == 4)
+	{
+		DrawString(textX, textY, "ÉnÉÄÉXÉ^Å[Ç™åªÇÍÇΩÅI", PEC);
+	}
+	if (ran == 5)
+	{
+		DrawString(textX, textY, "ÉnÉäÉlÉYÉ~Ç™åªÇÍÇΩÅI", PEC);
+	}
+
+	SetFontSize(30);
+	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
+	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	{
+		BattleSceneNow = (int)BATTLE_SENTAKU1;
+		escaperand = rand() % 3 * 1;
+	}
+}
+
+VOID SENTAKU1(VOID)
+{
+	SetFontSize(25);
+	DrawString(0, 405, "åNÇÕÇ«Ç§Ç∑ÇÈÅH", PEC);
+	SetFontSize(58);
+	DrawString(textX, textY, "1.êÌÇ§", PEC);
+	DrawString(textX+240, textY, "2.ì¶Ç∞ÇÈ", PEC);
+
+	if (AllKeyState[KEY_INPUT_1] == 1)
+	{
+		BattleSceneNow = (int)BATTLE_SENTAKU2;
+		missrand = rand() % 5 * 1;
+	}
+
+	if (AllKeyState[KEY_INPUT_2] == 1)
+	{
+		if (escaperand == 3)
+		{
+			BattleSceneNow = (int)BATTLE_PLAYERNORESCAPE;
+		}
+		else if(escaperand < 3)
+		{
+			BattleSceneNow = (int)BATTLE_PLAYERESCAPE;
+		}
+	}
+}
+
+VOID SENTAKU2(VOID)
+{
+	SetFontSize(25);
+	DrawString(0, 405, "åNÇÕÇ«Ç§Ç∑ÇÈÅH", PEC);
+	SetFontSize(58);
+	DrawString(textX, textY, "1.èe", PEC);
+	DrawString(textX + 240, textY, "2.ÉiÉCÉt", PEC);
+
+	if (missrand == 5)
+	{
+		if (AllKeyState[KEY_INPUT_1] == 1 || AllKeyState[KEY_INPUT_2] == 1)
+		{
+			BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
+		}
+	}
+	else
+	{
+		if (AllKeyState[KEY_INPUT_1] == 1 || AllKeyState[KEY_INPUT_2] == 1)
+		{
+			BattleSceneNow = (int)BATTLE_ENEMYDOWN;
+		}
+	}
+
+	BattleScenebefore = (int)BATTLE_SENTAKU2;
+}
+
+VOID ATTACKMISS(VOID)
+{
+	DrawString(textX, textY, "ÇµÇ©ÇµÅAçUåÇÇÕäOÇÍÇΩÅI", PEC);
+	SetFontSize(30);
+	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
+	
+	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	{
+		if (BattleScenebefore == (int)BATTLE_SENTAKU2)
+		{
+			BattleSceneNow = (int)BATTLE_ENEMY_TURN;
+		}
+		else if (BattleScenebefore == (int)BATTLE_ENEMY_TURN)
+		{
+			BattleSceneNow = (int)BATTLE_SENTAKU1;
+		}
+	}
+}
+
+VOID ENEMY_TURN(VOID)
+{
+	SetFontSize(58);
+	if (ran == 1)
+	{
+		DrawString(textX, textY, "ÉpÉìÉ_ÇÃÇ–Ç¡Ç©Ç≠ÅI", PEC);
+	}
+	if (ran == 2)
+	{
+		DrawString(textX, textY, "ÉLÉäÉìÇÃÇ»Ç¨ÇÕÇÁÇ¢ÅI", PEC);
+	}
+	if (ran == 3)
+	{
+		DrawString(textX, textY, "ÉEÉVÇÃÇ¬ÇÃÇ≈Ç¬Ç≠ÅI", PEC);
+	}
+	if (ran == 4)
+	{
+		DrawString(textX, textY, "ÉnÉÄÉXÉ^Å[ÇÕÇ…Ç∞ÇæÇµÇΩÅI", PEC);
+	}
+	if (ran == 5)
+	{
+		DrawString(textX, textY, "ÉnÉäÉlÉYÉ~ÇÕÇ…Ç∞ÇæÇµÇΩÅI", PEC);
+	}
+	SetFontSize(30);
+	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
+	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	{
+		if (ran >= 4)
+		{
+			GameSceneNow = (int)GAME_SCENE_IDOU;
+		}
+		else
+		{
+			if (missrand >= 4)
+			{
+				BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
+			}
+			else
+			{
+				BattleSceneNow = (int)BATTLE_PLAYERDOWN;
+			}
+		}
+	}
+}
+
+VOID PLAYERDOWN(VOID)
+{
+	SetFontSize(58);
+	DrawString(textX, textY, "åNÇÕì|Ç≥ÇÍÇΩÅI", PEC);
+	SetFontSize(30);
+	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
+	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	{
+		BattleSceneNow = (int)GAME_SCENE_OVER;
+	}
+}
+
+VOID ENEMYDOWN(VOID)
+{
+	SetFontSize(58);
+	if (ran == 1)
+	{
+		DrawString(textX, textY, "ÉpÉìÉ_Çì|ÇµÇΩÅI", PEC);
+	}
+	if (ran == 2)
+	{
+		DrawString(textX, textY, "ÉLÉäÉìÇì|ÇµÇΩÅI", PEC);
+	}
+	if (ran == 3)
+	{
+		DrawString(textX, textY, "ÉEÉVÇì|ÇµÇΩÅI", PEC);
+	}
+	if (ran == 4)
+	{
+		DrawString(textX, textY, "ÉnÉÄÉXÉ^Å[Çì|ÇµÇΩÅI", PEC);
+	}
+	if (ran == 5)
+	{
+		DrawString(textX, textY, "ÉnÉäÉlÉYÉ~Çì|ÇµÇΩÅI", PEC);
+	}
+
+	SetFontSize(30);
+	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
+	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	{
+		GameSceneNow = (int)GAME_SCENE_IDOU;
+	}
+}
+
+VOID PLAYERESCAPE(VOID)
+{
+	SetFontSize(58);
+	DrawString(textX, textY, "åNÇÕì¶Ç∞ÇÁÇÍÇΩÅI", PEC);
+	SetFontSize(30);
+	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
+	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	{
+		GameSceneNow = (int)GAME_SCENE_IDOU;
+	}
+}
+
+VOID PLAYERNOESCAPE(VOID)
+{
+	SetFontSize(58);
+	DrawString(textX, textY, "å„ÇÎÇ…âÒÇËçûÇ‹ÇÍÇƒÇµÇ‹Ç¡ÇΩÅI", PEC);
+	SetFontSize(30);
+	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
+	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	{
+		BattleSceneNow = (int)ENEMY_TURN;
 	}
 }
 
