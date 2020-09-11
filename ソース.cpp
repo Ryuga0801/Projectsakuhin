@@ -38,7 +38,8 @@
 #define GAME_MAP_CSV_NEKKO		 "map\\mapdata_nekko.csv"
 
 #define GAME_MUSIC_TITLE "music\\tsukito_ookami.mp3"
-#define GAME_MUSIC_FIELD "music\\field.mp3"
+#define GAME_MUSIC_FIELD "music\\Pappa_Parappa.mp3"
+#define GAME_MUSIC_BATTLE "music\\sakeDBD.mp3"
 
 #define GAME_MAP_BUN_YOKO_CNT 86	//マップの分割数（横）
 #define GAME_MAP_BUN_TATE_CNT 46    //マップの分割数（縦）
@@ -176,6 +177,7 @@ struct STRUCT_PLAYER
 	int Speed;							//速度
 
 	int MoveDist;						//移動距離
+	int MoveDist_Count;                 //どれだけ移動したか 
 
 	BOOL CanMoveLeft;					//左に行けるか
 	BOOL CanMoveRight;					//右に行けるか
@@ -233,6 +235,7 @@ PLAYER Myplayer;	//プレイヤー
 
 MUSIC MUSIC_TITLE;
 MUSIC MUSIC_FIELD;
+MUSIC MUSIC_BATTLE;
 
 // プレイヤーのイメージ画像の番号を設定する
 int PlayerImageNum[GAME_CHARA_MOTION_NUM] = {		//ツチノコの場合		//サーナイトの場合
@@ -387,6 +390,9 @@ int escaperand;//プレイヤーが逃げられるかのランダム関数
 int PEC = GetColor(255, 0, 255);
 int TC = GetColor(0, 0, 0);
 
+int Tama = 10;
+int Tama_Max = 10;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	ChangeWindowMode(GAME_WINDOW_MODECHANGE);
@@ -427,6 +433,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	MY_MUSIC_LOAD(&MUSIC_TITLE, GAME_MUSIC_TITLE);
 	MY_MUSIC_LOAD(&MUSIC_FIELD, GAME_MUSIC_FIELD);
+	MY_MUSIC_LOAD(&MUSIC_BATTLE, GAME_MUSIC_BATTLE);
 
 	if (FONT_CREATE(FNT_TANU_NAME, &HFontTanu_32, 32, 1, DX_FONTTYPE_ANTIALIASING_EDGE) == FALSE) { return -1; }
 
@@ -473,6 +480,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				MY_PLAYER_INITPOSI();
 				GameSceneNow = (int)GAME_SCENE_IDOU;
+				Tama = Tama_Max;
 			}
 
 			break;
@@ -485,8 +493,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					StopSoundMem(MUSIC_TITLE.Handle);
 				}
-				ChangeVolumeSoundMem(255 * 80 / 100, MUSIC_FIELD.Handle);
+				ChangeVolumeSoundMem(255 * 70 / 100, MUSIC_FIELD.Handle);
 				PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP,FALSE);
+			}
+
+			if (CheckSoundMem(MUSIC_BATTLE.Handle) == 0)
+			{
+				StopSoundMem(MUSIC_BATTLE.Handle);
 			}
 
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
@@ -499,7 +512,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_OVER;
 			}
 
-			if (AllKeyState[KEY_INPUT_SPACE] == 1)
+			if (Myplayer.MoveDist_Count == 15)
 			{
 				for (int i = 0; i < 1; i++)
 				{
@@ -520,6 +533,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		case(int)GAME_SCENE_SENTOU:
 
 			SENTOU_GAZOU_DRAW();
+
+			if (CheckSoundMem(MUSIC_BATTLE.Handle) == 0)
+			{
+				if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+				{
+					StopSoundMem(MUSIC_FIELD.Handle);
+				}
+				ChangeVolumeSoundMem(255 * 65 / 100, MUSIC_BATTLE.Handle);
+				PlaySoundMem(MUSIC_BATTLE.Handle, DX_PLAYTYPE_LOOP, FALSE);
+			}
 
 			switch (BattleSceneNow)
 			{
@@ -592,9 +615,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_TITLE;
 			}
 
-			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			if (CheckSoundMem(MUSIC_BATTLE.Handle) == 1)
 			{
-				StopSoundMem(MUSIC_FIELD.Handle);
+				StopSoundMem(MUSIC_BATTLE.Handle);
 			}
 
 			break;
@@ -608,9 +631,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				GameSceneNow = (int)GAME_SCENE_TITLE;
 			}
 
-			if (CheckSoundMem(MUSIC_FIELD.Handle) == 1)
+			if (CheckSoundMem(MUSIC_BATTLE.Handle) == 1)
 			{
-				StopSoundMem(MUSIC_FIELD.Handle);
+				StopSoundMem(MUSIC_BATTLE.Handle);
 			}
 
 			break;
@@ -637,6 +660,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	DeleteSoundMem(MUSIC_TITLE.Handle);
 	DeleteSoundMem(MUSIC_FIELD.Handle);
+	DeleteSoundMem(MUSIC_BATTLE.Handle);
 
 	DeleteGraph(title.Handle);
 	DeleteGraph(sousa.Handle);
@@ -661,6 +685,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 VOID SENTOU_GAZOU_DRAW(VOID)
 {
+	Myplayer.MoveDist_Count = 0;
 	DrawGraph(0, 0, sentou.Handle, TRUE);
 	DrawGraph(0, 400, text.Handle, TRUE);
 	if (ran == 1)
@@ -714,7 +739,7 @@ VOID GAME_START(VOID)
 	if (AllKeyState[KEY_INPUT_RETURN] == 1)
 	{
 		BattleSceneNow = (int)BATTLE_SENTAKU1;
-		escaperand = rand() % 3 * 1;
+		escaperand = rand() % 3 + 1;
 	}
 }
 
@@ -725,11 +750,13 @@ VOID SENTAKU1(VOID)
 	SetFontSize(58);
 	DrawString(textX, textY, "1.戦う", PEC);
 	DrawString(textX+240, textY, "2.逃げる", PEC);
+	SetFontSize(30);
+	DrawFormatString(0, textY + 100, TC, "残弾数:%d", Tama);
 
 	if (AllKeyState[KEY_INPUT_1] == 1)
 	{
 		BattleSceneNow = (int)BATTLE_SENTAKU2;
-		missrand = rand() % 5 * 1;
+		missrand = rand() % 10 + 1;
 	}
 
 	if (AllKeyState[KEY_INPUT_2] == 1)
@@ -752,17 +779,32 @@ VOID SENTAKU2(VOID)
 	SetFontSize(58);
 	DrawString(textX, textY, "1.銃", PEC);
 	DrawString(textX + 240, textY, "2.ナイフ", PEC);
+	SetFontSize(30);
+	DrawFormatString(0, textY + 100, TC, "残弾数:%d", Tama);
 
-	if (missrand == 5)
+	if (missrand >= 8)
 	{
-		if (AllKeyState[KEY_INPUT_1] == 1 || AllKeyState[KEY_INPUT_2] == 1)
+		if (AllKeyState[KEY_INPUT_1] == 1 )
+		{
+			Tama--;
+			BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
+		}
+	}
+	else if (missrand == 10)
+	{
+		if (AllKeyState[KEY_INPUT_2] == 1)
 		{
 			BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
 		}
 	}
 	else
 	{
-		if (AllKeyState[KEY_INPUT_1] == 1 || AllKeyState[KEY_INPUT_2] == 1)
+		if (AllKeyState[KEY_INPUT_1] == 1 )
+		{
+			Tama--;
+			BattleSceneNow = (int)BATTLE_ENEMYDOWN;
+		}
+		else if (AllKeyState[KEY_INPUT_2] == 1)
 		{
 			BattleSceneNow = (int)BATTLE_ENEMYDOWN;
 		}
@@ -792,6 +834,7 @@ VOID ATTACKMISS(VOID)
 
 VOID ENEMY_TURN(VOID)
 {
+	BattleScenebefore = (int)BATTLE_ENEMY_TURN;
 	SetFontSize(58);
 	if (ran == 1)
 	{
@@ -823,7 +866,7 @@ VOID ENEMY_TURN(VOID)
 		}
 		else
 		{
-			if (missrand >= 4)
+			if (missrand >= 6)
 			{
 				BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
 			}
@@ -894,12 +937,12 @@ VOID PLAYERESCAPE(VOID)
 VOID PLAYERNOESCAPE(VOID)
 {
 	SetFontSize(58);
-	DrawString(textX, textY, "後ろに回り込まれてしまった！", PEC);
+	DrawString(textX-50, textY, "後ろに回り込まれてしまった！", PEC);
 	SetFontSize(30);
 	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
 	if (AllKeyState[KEY_INPUT_RETURN] == 1)
 	{
-		BattleSceneNow = (int)ENEMY_TURN;
+		BattleSceneNow = (int)BATTLE_ENEMY_TURN;
 	}
 }
 
@@ -1249,6 +1292,7 @@ BOOL MY_INIT_PLAYER(PLAYER* p, CHARA c, int* num, int x, int y, int speed)
 	p->Speed = speed;	//移動速度を設定
 
 	p->MoveDist = x;	//今の距離を、マップの最初から動いた距離として設定する
+	p->MoveDist_Count = 0;	//動いた回数のカウントを0にする
 
 	p->CanMoveLeft = TRUE;	//左に移動できる
 	p->CanMoveRight = TRUE;	//右に移動できる
@@ -1663,6 +1707,7 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 				if (Myplayer.X > 0)
 				{
 					Myplayer.X -= Myplayer.Speed;	//プレイヤーを左に移動
+					Myplayer.MoveDist_Count++;				//動いた回数をカウント
 				}
 			}
 
@@ -1715,6 +1760,7 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 				if (Myplayer.X + Myplayer.Width < GAME_WIDTH)
 				{
 					Myplayer.X += Myplayer.Speed;	//プレイヤーを右に移動
+					Myplayer.MoveDist_Count++;				//動いた回数をカウント
 				}
 			}
 
@@ -1766,6 +1812,7 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 				if (Myplayer.Y > 0)
 				{
 					Myplayer.Y -= Myplayer.Speed;	//プレイヤーを上に移動
+					Myplayer.MoveDist_Count++;				//動いた回数をカウント
 				}
 			}
 
@@ -1818,6 +1865,7 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 				if (Myplayer.Y + Myplayer.Height < GAME_HEIGHT)
 				{
 					Myplayer.Y += Myplayer.Speed;	//プレイヤーを下に移動
+					Myplayer.MoveDist_Count++;				//動いた回数をカウント
 				}
 			}
 
