@@ -73,6 +73,8 @@
 #define GAME_MAP_NOTLEFT_KIND	30	//左に行けないマップの種類
 #define GAME_MAP_NOTRIGHT_KIND	30	//右に行けないマップの種類
 
+#define GAME_MAP_GOAL  20		//ゴールのマップの種類
+
 #define GAME_MAP_IDOU_KIND		1	//マップ移動の種類
 
 enum GAME_SCENE
@@ -184,6 +186,8 @@ struct STRUCT_PLAYER
 	BOOL CanMoveUp;						//上に行けるか
 	BOOL CanMoveDown;					//下に行けるか
 
+	BOOL BOSSENGAGE;		//ボスと会敵したか
+
 	int atariX;			//当たり判定のX位置
 	int atariY;			//当たり判定のY位置
 	int atariWidth;		//当たり判定の幅
@@ -258,11 +262,8 @@ BOOL GAZOU_LOAD(GAZOU*, int, int, const char*);
 BOOL FONT_CREATE(const char*, int*, int, int, int);
 
 BOOL MY_MAP_READ_CSV_NUM_SAIKASO(FILE*, const char*);
-
 BOOL MY_MAP_READ_CSV_NUM_NEKKO(FILE*, const char*);
-
 BOOL MY_MAP_READ_CSV_NUM_KI(FILE*, const char*);
-
 BOOL MY_MAP_READ_CSV_NUM_KABE(FILE*, const char*);
 
 BOOL MY_MAP_LOAD_BUNKATSU(MAP*, int, int, int, int, int, const char*);	//MAPを分割して読み込む設定をする関数
@@ -321,6 +322,9 @@ int MapData_kabe_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
 int MapData_nekko[GAME_MAP_TATE][GAME_MAP_YOKO]; //マップのデータ
 int MapData_nekko_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
 
+int MapData_goal[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ
+int MapData_goal_Init[GAME_MAP_TATE][GAME_MAP_YOKO];//マップのデータ（初期化用）
+
 FILE* fp_map_csv;		//ファイルの管理番号（ポインタ≒ハンドル）
 
 int MapNotDownKind[GAME_MAP_NOTDOWN_KIND] = {79,80,81,82,83,84,
@@ -355,7 +359,11 @@ int MapNotRightKind[GAME_MAP_NOTRIGHT_KIND] = { 761,762,
 												2296,2297,
 												2645,2646 };	//右に行けないマップの番号
 
-int MapGoalKind[GAME_MAP_IDOU_KIND] = {};//ゴールのマップの番号
+int MapGoalKind[GAME_MAP_GOAL] = { 664,665,
+								  749,750,751,752,
+								  875,876,877,878,
+								  921,922,923,924,
+								  1007,1008,1009,1010};//ゴールのマップの番号
 
 
 RECT rectMap_DownNG[GAME_MAP_TATE][GAME_MAP_YOKO];
@@ -372,6 +380,9 @@ RECT rectMap_RightNG_First[GAME_MAP_TATE][GAME_MAP_YOKO];
 
 RECT rectMap_UpNG[GAME_MAP_TATE][GAME_MAP_YOKO];
 RECT rectMap_UpNG_First[GAME_MAP_TATE][GAME_MAP_YOKO];
+
+RECT rectMap_goal[GAME_MAP_TATE][GAME_MAP_YOKO];
+RECT rectMap_goal_First[GAME_MAP_TATE][GAME_MAP_YOKO];
 
 VOID MY_SET_PLAYER_ATARI(PLAYER*);
 
@@ -393,6 +404,10 @@ int TC = GetColor(0, 0, 0);
 int Tama = 10;
 int Tama_Max = 10;
 
+int battlerand = 0;
+
+int hunt = 0;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	ChangeWindowMode(GAME_WINDOW_MODECHANGE);
@@ -409,7 +424,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (GAZOU_LOAD(&cow, 0, 0, GAME_ENEMY_COW) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&hamster, 0, 0, GAME_ENEMY_HAMSTER) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&hari, 0, 0, GAME_ENEMY_HARI) == FALSE) { return -1; }
-	if (GAZOU_LOAD(&lion, 0, 0, GAME_ENEMY_LION) == FALSE) { return -1; }
 
 	if (GAZOU_LOAD(&title, 0, 0, GAME_TITLE) == FALSE) { return -1; }
 	if (GAZOU_LOAD(&sousa, 0, 0, GAME_SOUSA) == FALSE) { return -1; }
@@ -459,12 +473,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					StopSoundMem(MUSIC_FIELD.Handle);
 				}
-				ChangeVolumeSoundMem(255 * 80 / 100, MUSIC_TITLE.Handle);
+				ChangeVolumeSoundMem(255 * 40 / 100, MUSIC_TITLE.Handle);
 				PlaySoundMem(MUSIC_TITLE.Handle, DX_PLAYTYPE_LOOP);
 			}
 			
 			DrawGraph(title.X, title.Y, title.Handle, TRUE);
 
+			if (BattleSceneNow != (int)BATTLE_START)
+			{
+				BattleSceneNow = (int)BATTLE_START;
+			}
+			
 			if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
 				GameSceneNow = (int)GAME_SCENE_SOUSA;
@@ -493,16 +512,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					StopSoundMem(MUSIC_TITLE.Handle);
 				}
-				ChangeVolumeSoundMem(255 * 70 / 100, MUSIC_FIELD.Handle);
-				PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP,FALSE);
+				ChangeVolumeSoundMem(255 * 40 / 100, MUSIC_FIELD.Handle);
+				PlaySoundMem(MUSIC_FIELD.Handle, DX_PLAYTYPE_LOOP,TRUE);
 			}
 
-			if (CheckSoundMem(MUSIC_BATTLE.Handle) == 0)
+			if (CheckSoundMem(MUSIC_BATTLE.Handle) == 1)
 			{
 				StopSoundMem(MUSIC_BATTLE.Handle);
 			}
 
-			if (AllKeyState[KEY_INPUT_RETURN] == 1)
+			/*if (AllKeyState[KEY_INPUT_RETURN] == 1)
 			{
 				GameSceneNow = (int)GAME_SCENE_CLEAR;
 			}
@@ -510,17 +529,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (AllKeyState[KEY_INPUT_BACK] == 1)
 			{
 				GameSceneNow = (int)GAME_SCENE_OVER;
-			}
+			}*/
 
-			if (Myplayer.MoveDist_Count == 15)
+			if (Myplayer.MoveDist_Count == 3)
 			{
-				for (int i = 0; i < 1; i++)
+				battlerand = rand() % 90 + 0;
+				if (battlerand >= 85)
 				{
-					ran = rand() % 5 + 1;
-				}
+					for (int i = 0; i < 1; i++)
+					{
+						ran = rand() % 5 + 1;
+					}
 
-				GameSceneNow = (int)GAME_SCENE_SENTOU;
-				BattleSceneNow = (int)BATTLE_START;
+					GameSceneNow = (int)GAME_SCENE_SENTOU;
+					BattleSceneNow = (int)BATTLE_START;
+				}
+				Myplayer.MoveDist_Count = 0;
 			}
 
 			//MY_PLAY_MAP_DRAW();			//マップを描画
@@ -540,8 +564,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					StopSoundMem(MUSIC_FIELD.Handle);
 				}
-				ChangeVolumeSoundMem(255 * 65 / 100, MUSIC_BATTLE.Handle);
-				PlaySoundMem(MUSIC_BATTLE.Handle, DX_PLAYTYPE_LOOP, FALSE);
+				ChangeVolumeSoundMem(255 * 40 / 100, MUSIC_BATTLE.Handle);
+				PlaySoundMem(MUSIC_BATTLE.Handle, DX_PLAYTYPE_LOOP, TRUE);
 			}
 
 			switch (BattleSceneNow)
@@ -692,22 +716,23 @@ VOID SENTOU_GAZOU_DRAW(VOID)
 	{
 		DrawExtendGraph(280, 200, 465, 350, panda.Handle, TRUE);
 	}
-	if (ran == 2)
+	else if (ran == 2)
 	{
 		DrawExtendGraph(280, 200, 465, 350, kirin.Handle, TRUE);
 	}
-	if (ran == 3)
+	else if (ran == 3)
 	{
 		DrawExtendGraph(280, 200, 465, 350, cow.Handle, TRUE);
 	}
-	if (ran == 4)
+	else if (ran == 4)
 	{
 		DrawExtendGraph(280, 200, 465, 350, hamster.Handle, TRUE);
 	}
-	if(ran==5)
+	else if(ran==5)
 	{
 		DrawExtendGraph(280, 200, 465, 350, hari.Handle, TRUE);
 	}
+
 }
 
 VOID GAME_START(VOID)
@@ -717,19 +742,19 @@ VOID GAME_START(VOID)
 	{
 		DrawString(textX, textY, "パンダが現れた！",PEC);
 	}
-	if (ran == 2)
+	else if (ran == 2)
 	{
 		DrawString(textX, textY, "キリンが現れた！", PEC);
 	}
-	if (ran == 3)
+	else if (ran == 3)
 	{
 		DrawString(textX, textY, "ウシが現れた！", PEC);
 	}
-	if (ran == 4)
+	else if (ran == 4)
 	{
 		DrawString(textX, textY, "ハムスターが現れた！", PEC);
 	}
-	if (ran == 5)
+	else if (ran == 5)
 	{
 		DrawString(textX, textY, "ハリネズミが現れた！", PEC);
 	}
@@ -782,31 +807,31 @@ VOID SENTAKU2(VOID)
 	SetFontSize(30);
 	DrawFormatString(0, textY + 100, TC, "残弾数:%d", Tama);
 
-	if (missrand >= 8)
+	
+	if (AllKeyState[KEY_INPUT_1] == 1 )
 	{
-		if (AllKeyState[KEY_INPUT_1] == 1 )
-		{
-			Tama--;
-			BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
-		}
-	}
-	else if (missrand == 10)
-	{
-		if (AllKeyState[KEY_INPUT_2] == 1)
+		Tama--;
+		if (missrand >= 8)
 		{
 			BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
 		}
-	}
-	else
-	{
-		if (AllKeyState[KEY_INPUT_1] == 1 )
+		else
 		{
-			Tama--;
 			BattleSceneNow = (int)BATTLE_ENEMYDOWN;
+			hunt += 1;
 		}
-		else if (AllKeyState[KEY_INPUT_2] == 1)
+	}
+	
+	if (AllKeyState[KEY_INPUT_2] == 1)
+	{
+		if (missrand == 10)
+		{
+			BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
+		}
+		else
 		{
 			BattleSceneNow = (int)BATTLE_ENEMYDOWN;
+			hunt += 1;
 		}
 	}
 
@@ -840,22 +865,23 @@ VOID ENEMY_TURN(VOID)
 	{
 		DrawString(textX, textY, "パンダのひっかく！", PEC);
 	}
-	if (ran == 2)
+	else if (ran == 2)
 	{
 		DrawString(textX, textY, "キリンのなぎはらい！", PEC);
 	}
-	if (ran == 3)
+	else if (ran == 3)
 	{
 		DrawString(textX, textY, "ウシのつのでつく！", PEC);
 	}
-	if (ran == 4)
+	else if (ran == 4)
 	{
 		DrawString(textX, textY, "ハムスターはにげだした！", PEC);
 	}
-	if (ran == 5)
+	else if (ran == 5)
 	{
 		DrawString(textX, textY, "ハリネズミはにげだした！", PEC);
 	}
+
 	SetFontSize(30);
 	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
 	if (AllKeyState[KEY_INPUT_RETURN] == 1)
@@ -870,7 +896,7 @@ VOID ENEMY_TURN(VOID)
 			{
 				BattleSceneNow = (int)BATTLE_ATTACK_HAZURE;
 			}
-			else
+			else if(missrand<=5)
 			{
 				BattleSceneNow = (int)BATTLE_PLAYERDOWN;
 			}
@@ -886,7 +912,7 @@ VOID PLAYERDOWN(VOID)
 	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
 	if (AllKeyState[KEY_INPUT_RETURN] == 1)
 	{
-		BattleSceneNow = (int)GAME_SCENE_OVER;
+		GameSceneNow = (int)GAME_SCENE_OVER;
 	}
 }
 
@@ -897,28 +923,38 @@ VOID ENEMYDOWN(VOID)
 	{
 		DrawString(textX, textY, "パンダを倒した！", PEC);
 	}
-	if (ran == 2)
+	else if (ran == 2)
 	{
 		DrawString(textX, textY, "キリンを倒した！", PEC);
 	}
-	if (ran == 3)
+	else if (ran == 3)
 	{
 		DrawString(textX, textY, "ウシを倒した！", PEC);
 	}
-	if (ran == 4)
+	else if (ran == 4)
 	{
 		DrawString(textX, textY, "ハムスターを倒した！", PEC);
 	}
-	if (ran == 5)
+	else if (ran == 5)
 	{
 		DrawString(textX, textY, "ハリネズミを倒した！", PEC);
 	}
 
 	SetFontSize(30);
 	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
-	if (AllKeyState[KEY_INPUT_RETURN] == 1)
+	if (hunt == 10)
 	{
-		GameSceneNow = (int)GAME_SCENE_IDOU;
+		if (AllKeyState[KEY_INPUT_RETURN] == 1)
+		{
+			GameSceneNow = (int)GAME_SCENE_CLEAR;
+		}
+	}
+	else
+	{
+		if (AllKeyState[KEY_INPUT_RETURN] == 1)
+		{
+			GameSceneNow = (int)GAME_SCENE_IDOU;
+		}
 	}
 }
 
@@ -937,7 +973,7 @@ VOID PLAYERESCAPE(VOID)
 VOID PLAYERNOESCAPE(VOID)
 {
 	SetFontSize(58);
-	DrawString(textX-50, textY, "後ろに回り込まれてしまった！", PEC);
+	DrawString(textX-80, textY, "後ろに回り込まれてしまった！", PEC);
 	SetFontSize(30);
 	DrawString(textX + 450, textY + 100, "Push Enter!", TC);
 	if (AllKeyState[KEY_INPUT_RETURN] == 1)
@@ -1209,7 +1245,7 @@ VOID MY_PLAY_DRAW(VOID)
 			}
 		}
 	}
-
+	DrawFormatString(0, textY + 100, TC, "倒した敵の数:%d", hunt);
 	//DrawFormatString(0, 30, GetColor(255, 255, 255), "プレイヤーX位置: %d", Myplayer.X);
 	//DrawFormatString(0, 50, GetColor(255, 255, 255), "プレイヤーY位置: %d", Myplayer.Y);
 
@@ -1659,6 +1695,8 @@ VOID MY_PLAY_PLAYER_OPERATION(VOID)
 	BOOL CanMoveRight = TRUE;	//右に行けるか
 	BOOL CanMoveUp = TRUE;		//上に行けるか
 	BOOL CanMoveDown = TRUE;	//下に行けるか
+
+	BOOL BOSSENGAGE = FALSE;
 
 	//プレイヤーの位置がマップ配列のどこにいるか変換
 	int PlayerToMapNumY;
